@@ -514,6 +514,15 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 		if ((cmd->CMDPMOD & 0x40u) != 0) progMask |= 0x200; //SPD
 		if ((cmd->CMDPMOD & 0x80u) != 0) progMask |= 0x400; //END
 		progMask |= 0x1000 << ((cmd->CMDPMOD >> 3) & 0x7u);
+		progMask |= 0x100000 << ((cmd->CMDPMOD) & 0x7u);
+
+		if ((cmd->CMDPMOD & 0x100u) == 0x100u) progMask |= 0x20000000;
+
+		// if ((cmd->CMDCTRL & 0x10) != 0) progMask|= 0x40000000; //Flip
+		// if ((cmd->CMDCTRL & 0x20) != 0) progMask|= 0x80000000; //Flip
+
+		if (((cmd->CMDPMOD >> 9) & 0x3u) == 2u) progMask|= 0x40000000; //Draw inside
+		if (((cmd->CMDPMOD >> 9) & 0x3u) == 3u) progMask|= 0x80000000; //Draw outside
 
 	}
 	memcpy(&cmdVdp1List[nbCmdToProcess], cmd, sizeof(vdp1cmd_struct));
@@ -702,7 +711,7 @@ void vdp1_compute() {
 	if (prg_vdp1[progId] == 0)
 	prg_vdp1[progId] = createProgram(sizeof(a_prg_vdp1[progId]) / sizeof(char*), (const GLchar**)a_prg_vdp1[progId]);
 
-YuiMsg("Use program 0x%x\n", progMask);
+// YuiMsg("Use program 0x%x\n", progMask);
 
 	glUseProgram(prg_vdp1[progId]);
 

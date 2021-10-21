@@ -335,22 +335,22 @@ SHADER_VERSION_COMPUTE
 "  Quad[2] = vec2(cmd[idx].CMDXC,cmd[idx].CMDYC)*upscale;\n"
 "  Quad[3] = vec2(cmd[idx].CMDXD,cmd[idx].CMDYD)*upscale;\n"
 
-"  if ((cmd[idx].type == "Stringify(DISTORTED)") || (cmd[idx].type == "Stringify(POLYGON)")) {\n"
+// "  if ((cmd[idx].type == "Stringify(DISTORTED)") || (cmd[idx].type == "Stringify(POLYGON)")) {\n"
 "    return isOnAQuadLine(Pin, Quad[0], Quad[1], vec2(cmd[idx].uAstepx, cmd[idx].uAstepy)*upscale, vec2(cmd[idx].uBstepx, cmd[idx].uBstepy)*upscale, uint(float(cmd[idx].nbStep)), uv);\n"
-"  } else {\n"
-"    if ((cmd[idx].type == "Stringify(QUAD)")  || (cmd[idx].type == "Stringify(QUAD_POLY)")) {\n"
-"     return isOnAQuad(Pin, Quad[0], Quad[2], uv);\n"
-"    } else if (cmd[idx].type == "Stringify(POLYLINE)") {\n"
-"      if (isOnALine(Pin, Quad[0], Quad[1], uv) != 0u) return 1u;\n"
-"      if (isOnALine(Pin, Quad[1], Quad[2], uv) != 0u) return 1u;\n"
-"      if (isOnALine(Pin, Quad[2], Quad[3], uv) != 0u) return 1u;\n"
-"      if (isOnALine(Pin, Quad[3], Quad[0], uv) != 0u) return 1u;\n"
-"      return 0u;\n"
-"    } else if (cmd[idx].type == "Stringify(LINE)") {\n"
-"      if (isOnALine(Pin, Quad[0], Quad[1], uv) != 0u) return 1u;\n"
-"    }\n"
-"  }\n"
-"  return 0u;\n"
+// "  } else {\n"
+// "    if ((cmd[idx].type == "Stringify(QUAD)")  || (cmd[idx].type == "Stringify(QUAD_POLY)")) {\n"
+// "     return isOnAQuad(Pin, Quad[0], Quad[2], uv);\n"
+// "    } else if (cmd[idx].type == "Stringify(POLYLINE)") {\n"
+// "      if (isOnALine(Pin, Quad[0], Quad[1], uv) != 0u) return 1u;\n"
+// "      if (isOnALine(Pin, Quad[1], Quad[2], uv) != 0u) return 1u;\n"
+// "      if (isOnALine(Pin, Quad[2], Quad[3], uv) != 0u) return 1u;\n"
+// "      if (isOnALine(Pin, Quad[3], Quad[0], uv) != 0u) return 1u;\n"
+// "      return 0u;\n"
+// "    } else if (cmd[idx].type == "Stringify(LINE)") {\n"
+// "      if (isOnALine(Pin, Quad[0], Quad[1], uv) != 0u) return 1u;\n"
+// "    }\n"
+// "  }\n"
+// "  return 0u;\n"
 "}\n"
 
 "int getCmd(vec2 P, uint id, uint start, uint end, out uint zone, bool wait_sysclip, out vec2 uv)\n"
@@ -573,131 +573,131 @@ SHADER_VERSION_COMPUTE
 "      waitSysClip = true;\n"
 "      continue;\n"
 "    }"
-"    if (((pixcmd.CMDPMOD >> 9) & 0x3u) == 2u) {\n"
-//Draw inside
-"      if (any(lessThan(pos,userlimit.xy*scaleRot*upscale)) || any(greaterThan(pos,userlimit.zw*scaleRot*upscale))) continue;\n"
-"    }\n"
-"    if (((pixcmd.CMDPMOD >> 9) & 0x3u) == 3u) {\n"
-//Draw outside
-"      if (all(greaterThanEqual(pos,userlimit.xy*scaleRot*upscale)) && all(lessThanEqual(pos,userlimit.zw*scaleRot*upscale))) continue;\n"
-"    }\n"
+// "    if (((pixcmd.CMDPMOD >> 9) & 0x3u) == 2u) {\n"
+// //Draw inside
+// "      if (any(lessThan(pos,userlimit.xy*scaleRot*upscale)) || any(greaterThan(pos,userlimit.zw*scaleRot*upscale))) continue;\n"
+// "    }\n"
+// "    if (((pixcmd.CMDPMOD >> 9) & 0x3u) == 3u) {\n"
+// //Draw outside
+// "      if (all(greaterThanEqual(pos,userlimit.xy*scaleRot*upscale)) && all(lessThanEqual(pos,userlimit.zw*scaleRot*upscale))) continue;\n"
+// "    }\n"
 "    texcoord = uv;\n"
 "    gouraudcoord = texcoord;\n"
 "    if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
 "    if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y - 1.0f/float(pixcmd.h);\n" //invert vertically
-"    if (pixcmd.type <= "Stringify(LINE)") {\n"
-"      newColor = extractPolygonColor(pixcmd);\n"
-"    } else if (pixcmd.type <= "Stringify(QUAD)") {\n"
+// "    if (pixcmd.type <= "Stringify(LINE)") {\n"
+// "      newColor = extractPolygonColor(pixcmd);\n"
+// "    } else if (pixcmd.type <= "Stringify(QUAD)") {\n"
 "      newColor = ReadSpriteColor(pixcmd, texcoord, texel, discarded);\n"
-"    }\n"
+// "    }\n"
 "    if (discarded) continue;\n"
 "    else drawn = true;\n"
 "    texel = OriginTexel;\n"
      COLINDEX(finalColor)
      COLINDEX(newColor);
 static const char vdp1_banding_f[] =
-"    if ((pixcmd.CMDPMOD & 0x8000u) == 0x8000u) {\n"
-       //MSB shadow
-       MSB_SHADOW(finalColor)
-"      outColor = finalColor;\n"
-"    } else {"
-"      switch (pixcmd.CMDPMOD & 0x7u){\n"
-"        case 0u: {\n"
+// "    if ((pixcmd.CMDPMOD & 0x8000u) == 0x8000u) {\n"
+//        //MSB shadow
+//        MSB_SHADOW(finalColor)
+// "      outColor = finalColor;\n"
+// "    } else {"
+// "      switch (pixcmd.CMDPMOD & 0x7u){\n"
+// "        case 0u: {\n"
            // replace_mode
-"          outColor = newColor;\n"
-"          }; break;\n"
-"        case 1u: {\n"
-           //shadow_mode,
-           SHADOW(finalColor)
-"          outColor = finalColor;\n"
-"          }; break;\n"
-"        case 2u: {\n"
-           //half_luminance_mode,
-           HALF_LUMINANCE(newColor)
-"          outColor = newColor;\n"
-"          }; break;\n"
-"        case 3u: {\n"
-           //half_trans_mode,
-           HALF_TRANPARENT_MIX(newColor, finalColor)
-"          outColor = newColor;\n"
-"          }; break;\n"
-"        case 4u: {\n"
-           //gouraud_mode,
-           GOURAUD_PROCESS(newColor)
-"          outColor = newColor;\n"
-"          }; break;\n"
-"        case 6u: {\n"
-           //gouraud_half_luminance_mode,
-           GOURAUD_PROCESS(newColor)
-           RECOLINDEX(newColor)
-           HALF_LUMINANCE(newColor)
-"          outColor = newColor;\n"
-"          }; break;\n"
-"        case 7u: {\n"
-           //gouraud_half_trans_mode,
-           GOURAUD_PROCESS(newColor)
-           RECOLINDEX(newColor)
-           HALF_TRANPARENT_MIX(newColor, finalColor)
-"          outColor = newColor;\n"
-"          }; break;\n"
-"        default:\n"
-"          discarded = true;\n"
-"          break;\n"
-"      }\n"
-"    }\n";
+"          outColor = newColor;\n";
+// "          }; break;\n"
+// "        case 1u: {\n"
+//            //shadow_mode,
+//            SHADOW(finalColor)
+// "          outColor = finalColor;\n"
+// "          }; break;\n"
+// "        case 2u: {\n"
+//            //half_luminance_mode,
+//            HALF_LUMINANCE(newColor)
+// "          outColor = newColor;\n"
+// "          }; break;\n"
+// "        case 3u: {\n"
+//            //half_trans_mode,
+//            HALF_TRANPARENT_MIX(newColor, finalColor)
+// "          outColor = newColor;\n"
+// "          }; break;\n"
+// "        case 4u: {\n"
+//            //gouraud_mode,
+//            GOURAUD_PROCESS(newColor)
+// "          outColor = newColor;\n"
+// "          }; break;\n"
+// "        case 6u: {\n"
+//            //gouraud_half_luminance_mode,
+//            GOURAUD_PROCESS(newColor)
+//            RECOLINDEX(newColor)
+//            HALF_LUMINANCE(newColor)
+// "          outColor = newColor;\n"
+// "          }; break;\n"
+// "        case 7u: {\n"
+//            //gouraud_half_trans_mode,
+//            GOURAUD_PROCESS(newColor)
+//            RECOLINDEX(newColor)
+//            HALF_TRANPARENT_MIX(newColor, finalColor)
+// "          outColor = newColor;\n"
+// "          }; break;\n"
+// "        default:\n"
+// "          discarded = true;\n"
+// "          break;\n"
+// "      }\n"
+// "    }\n";
 
 static const char vdp1_no_banding_f[] =
-"    if ((pixcmd.CMDPMOD & 0x8000u) == 0x8000u) {\n"
-       //MSB shadow
-       MSB_SHADOW(finalColor)
-"      outColor = finalColor;\n"
-"    } else {"
-"      switch (pixcmd.CMDPMOD & 0x7u){\n"
-"        case 0u: {\n"
+// "    if ((pixcmd.CMDPMOD & 0x8000u) == 0x8000u) {\n"
+//        //MSB shadow
+//        MSB_SHADOW(finalColor)
+// "      outColor = finalColor;\n"
+// "    } else {"
+// "      switch (pixcmd.CMDPMOD & 0x7u){\n"
+// "        case 0u: {\n"
            // replace_mode
-"          outColor = newColor;\n"
-"          }; break;\n"
-"        case 1u: {\n"
-           //shadow_mode,
-           SHADOW(finalColor)
-"          outColor = finalColor;\n"
-"          }; break;\n"
-"        case 2u: {\n"
-           //half_luminance_mode,
-           HALF_LUMINANCE(newColor)
-"          outColor = newColor;\n"
-"          }; break;\n"
-"        case 3u: {\n"
-           //half_trans_mode,
-           HALF_TRANPARENT_MIX(newColor, finalColor)
-"          outColor = newColor;\n"
-"          }; break;\n"
-"        case 4u: {\n"
-           //gouraud_mode,
-           GOURAUD_PROCESS_EXTENDED(newColor)
-"          outColor = newColor;\n"
-"          }; break;\n"
-"        case 6u: {\n"
-           //gouraud_half_luminance_mode,
-           GOURAUD_PROCESS_EXTENDED(newColor)
-           RECOLINDEX(newColor)
-           //MSB bits in .ba has to be divided by two also...
-           HALF_LUMINANCE(newColor)
-"          outColor = newColor;\n"
-"          }; break;\n"
-"        case 7u: {\n"
-           //gouraud_half_trans_mode,
-           GOURAUD_PROCESS_EXTENDED(newColor)
-           RECOLINDEX(newColor)
-           //MSB bits in .ba has to be divided by two also...
-           HALF_TRANPARENT_MIX(newColor, finalColor)
-"          outColor = newColor;\n"
-"          }; break;\n"
-"        default:\n"
-"          discarded = true;\n"
-"          break;\n"
-"      }\n"
-"    }\n";
+"          outColor = newColor;\n";
+// "          }; break;\n"
+// "        case 1u: {\n"
+//            //shadow_mode,
+//            SHADOW(finalColor)
+// "          outColor = finalColor;\n"
+// "          }; break;\n"
+// "        case 2u: {\n"
+//            //half_luminance_mode,
+//            HALF_LUMINANCE(newColor)
+// "          outColor = newColor;\n"
+// "          }; break;\n"
+// "        case 3u: {\n"
+//            //half_trans_mode,
+//            HALF_TRANPARENT_MIX(newColor, finalColor)
+// "          outColor = newColor;\n"
+// "          }; break;\n"
+// "        case 4u: {\n"
+//            //gouraud_mode,
+//            GOURAUD_PROCESS_EXTENDED(newColor)
+// "          outColor = newColor;\n"
+// "          }; break;\n"
+// "        case 6u: {\n"
+//            //gouraud_half_luminance_mode,
+//            GOURAUD_PROCESS_EXTENDED(newColor)
+//            RECOLINDEX(newColor)
+//            //MSB bits in .ba has to be divided by two also...
+//            HALF_LUMINANCE(newColor)
+// "          outColor = newColor;\n"
+// "          }; break;\n"
+// "        case 7u: {\n"
+//            //gouraud_half_trans_mode,
+//            GOURAUD_PROCESS_EXTENDED(newColor)
+//            RECOLINDEX(newColor)
+//            //MSB bits in .ba has to be divided by two also...
+//            HALF_TRANPARENT_MIX(newColor, finalColor)
+// "          outColor = newColor;\n"
+// "          }; break;\n"
+// "        default:\n"
+// "          discarded = true;\n"
+// "          break;\n"
+// "      }\n"
+// "    }\n";
 
 static const char vdp1_standard_mesh_f[] =
 //Normal mesh
@@ -726,15 +726,15 @@ static const char vdp1_improved_mesh_f[] =
 "  }\n";
 
 static const char vdp1_continue_mesh_f[] =
-"    if (drawn) {"
+// "    if (drawn) {"
 "      meshColor.rg = tag;\n"
-"      finalColor = outColor;\n"
-"    }\n";
+"      finalColor = outColor;\n";
+// "    }\n";
 
 static const char vdp1_continue_no_mesh_f[] =
-"    if (drawn) {"
+// "    if (drawn) {"
 "      finalColor = outColor;\n"
-"    }\n";
+// "    }\n";
 
 static const char vdp1_end_f[] =
 "  }\n"
