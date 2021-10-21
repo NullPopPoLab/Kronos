@@ -733,7 +733,7 @@ static const char vdp1_continue_mesh_f[] =
 
 static const char vdp1_continue_no_mesh_f[] =
 // "    if (drawn) {"
-"      finalColor = outColor;\n"
+"      finalColor = outColor;\n";
 // "    }\n";
 
 static const char vdp1_end_f[] =
