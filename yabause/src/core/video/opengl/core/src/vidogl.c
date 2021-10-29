@@ -28,7 +28,6 @@
 #define EPSILON (1e-10 )
 
 
-
 #include "vidogl.h"
 #include "vidshared.h"
 #include "debug.h"
@@ -40,6 +39,25 @@
 
 #define Y_MAX(a, b) ((a) > (b) ? (a) : (b))
 #define Y_MIN(a, b) ((a) < (b) ? (a) : (b))
+
+// #define YAB_VDP2_STATS
+
+#define VDP2_CELL_THREAD_NB 4
+
+#ifdef YAB_VDP2_STATS
+u64 cpu_emutime;
+u64 current_cpu_clock;
+#define START_STATS \
+  cpu_emutime = 0; \
+  current_cpu_clock = YabauseGetTicks();
+#define PRINT_STAT(A) \
+  cpu_emutime = (YabauseGetTicks() - current_cpu_clock) * 1000000 / yabsys.tickfreq; \
+  current_cpu_clock = YabauseGetTicks(); \
+  YuiMsg("%s = %ld @ %d \n", A, cpu_emutime, yabsys.frame_count );
+#else
+#define START_STATS
+#define PRINT_STAT(A)
+#endif
 
 
 #define DEBUG_BAD_COORD //YuiMsg
@@ -234,14 +252,14 @@ static int vdp1text_run = 0;
 
 static void FASTCALL Vdp2DrawCell_in_sync(vdp2draw_struct *info, YglTexture *texture, Vdp2 *varVdp2Regs);
 
-#define NB_MSG 128
+#define NB_MSG 256
 
 #ifdef CELL_ASYNC
 
 static void executeDrawCell();
 
-YabEventQueue *cellq = NULL;
-YabEventQueue *cellq_end = NULL;
+YabEventQueue *cellq[VDP2_CELL_THREAD_NB] = {NULL};
+YabEventQueue *cellq_end[VDP2_CELL_THREAD_NB] = {NULL};
 static int drawcell_run = 0;
 
 typedef struct {
@@ -264,8 +282,9 @@ int orderTable[NB_MSG];
 
 void Vdp2DrawCell_in_async(void *p)
 {
+  int id = (int)(p);
    while(drawcell_run != 0){
-     drawCellTask *task = (drawCellTask *)YabWaitEventQueue(cellq);
+     drawCellTask *task = (drawCellTask *)YabWaitEventQueue(cellq[id]);
      if (task != NULL) {
        if (task->order == CELL_SINGLE) {
          Vdp2DrawCell_in_sync(task->info, task->texture, task->varVdp2Regs);
@@ -283,9 +302,11 @@ void Vdp2DrawCell_in_async(void *p)
        free(task->varVdp2Regs);
        free(task);
      }
-     YabWaitEventQueue(cellq_end);
+     YabWaitEventQueue(cellq_end[id]);
    }
 }
+
+int idThread = 0;
 
 static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture, Vdp2 *varVdp2Regs, int order) {
    drawCellTask *task = malloc(sizeof(drawCellTask));
@@ -304,13 +325,15 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture, Vd
 
    if (drawcell_run == 0) {
      drawcell_run = 1;
-     cellq = YabThreadCreateQueue(NB_MSG);
-     cellq_end = YabThreadCreateQueue(NB_MSG);
-     YabThreadStart(YAB_THREAD_VDP2_NBG0, Vdp2DrawCell_in_async, 0);
+     for (int i = 0; i<VDP2_CELL_THREAD_NB; i++) {
+       cellq[i] = YabThreadCreateQueue(NB_MSG);
+       cellq_end[i] = YabThreadCreateQueue(NB_MSG);
+       YabThreadStart(YAB_THREAD_VDP2_NBG0 + i, Vdp2DrawCell_in_async, (void*)i);
+     }
    }
-   YabAddEventQueue(cellq_end, NULL);
-   YabAddEventQueue(cellq, task);
-   YabThreadYield();
+   YabAddEventQueue(cellq_end[idThread], NULL);
+   YabAddEventQueue(cellq[idThread], task);
+   idThread = (idThread +1)%VDP2_CELL_THREAD_NB;
 }
 
 static void requestDrawCellOrder(vdp2draw_struct * info, YglTexture *texture, Vdp2* varVdp2Regs, int order) {
@@ -360,6 +383,7 @@ static void executeDrawCell() {
     free(vdp2RegsTable[i]);
     i++;
   }
+  YabThreadYield();
   nbLoop = 0;
 #endif
 }
@@ -2600,7 +2624,6 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture, Vdp2 *va
       //charx = dot_on_pagex - pagex*(512 / info->pagewh);
       charx = dot_on_pagex & page_mask;
       if (pagex < 0) pagex = info->pagewh - 1 + pagex;
-
       info->PlaneAddr(info, info->mapwh * mapy + mapx, varVdp2Regs);
       if (Vdp2PatternAddrPos(info, planex, pagex, planey, pagey, varVdp2Regs) != 0) {
 
@@ -3307,9 +3330,9 @@ void VIDOGLDeInit(void)
 #ifdef CELL_ASYNC
   if (drawcell_run == 1) {
     drawcell_run = 0;
-    for (int i=0; i<4; i++) {
-      YabAddEventQueue(cellq_end, NULL);
-      YabAddEventQueue(cellq, NULL);
+    for (int i=0; i<VDP2_CELL_THREAD_NB; i++) {
+      YabAddEventQueue(cellq_end[i], NULL);
+      YabAddEventQueue(cellq[i], NULL);
     }
     YabThreadWait(YAB_THREAD_VDP2_NBG0);
     YabThreadWait(YAB_THREAD_VDP2_NBG1);
@@ -5499,6 +5522,9 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
 
 static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
 {
+  // Il faudrait pouvoir decouper en 4 sous parties pour le faire par CPU.
+  // Mais ca bloque avec le TM, notamment pour le realloc... Il faudrait eviter un realloc...
+
   vdp2draw_struct info = {0};
   YglTexture texture;
   info.dst = 0;
@@ -5587,8 +5613,11 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
 
   info.x = (varVdp2Regs->SCXN2 & 0x7FF) + xoffset;
   info.y = varVdp2Regs->SCYN2 & 0x7FF;
+PRINT_STAT("NBG2 Common")
   Vdp2DrawMapTest(&info, &texture, varVdp2Regs);
+PRINT_STAT("NBG2 MapTest")
   executeDrawCell();
+PRINT_STAT("NBG2 Exec cell")
 
 }
 
@@ -6024,19 +6053,6 @@ static void Vdp2DrawRBG0(Vdp2* varVdp2Regs)
 //////////////////////////////////////////////////////////////////////////////
 #define BG_PROFILE 0
 
-#ifdef YAB_VDP2_STATS
-#define START_STATS \
-  u64 cpu_emutime = 0; \
-  u64 current_cpu_clock = YabauseGetTicks();
-#define PRINT_STAT(A) \
-  cpu_emutime = (YabauseGetTicks() - current_cpu_clock) * 1000000 / yabsys.tickfreq; \
-  current_cpu_clock = YabauseGetTicks(); \
-  YuiMsg("%s = %ld @ %d \n", A, cpu_emutime, yabsys.frame_count );
-#else
-#define START_STATS
-#define PRINT_STAT(A)
-#endif
-
 #define VDP2_DRAW_LINE 0
 static void VIDOGLVdp2DrawScreens(void)
 {
@@ -6114,13 +6130,18 @@ int WaitVdp2Async(int sync) {
     }
 #endif
 #ifdef CELL_ASYNC
-    if (cellq_end != NULL) {
-      empty = 1;
-      while (((empty = YaGetQueueSize(cellq_end))!=0) && (sync == 1))
+  for (int i = 0; i<VDP2_CELL_THREAD_NB ; i++) {
+    if (cellq_end[i] != NULL) {
+      empty |= (1<<i);
+      if (sync == 1)
       {
-        YabThreadYield();
+        while(YaGetQueueSize(cellq_end[i])!=0) {
+          YabThreadYield();
+        }
+        empty &= ~(1<<i);
       }
     }
+  }
 #endif
     RBGGenerator_onFinish();
     if (empty == 0) vdp2busy = 0;

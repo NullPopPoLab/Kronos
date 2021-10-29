@@ -641,6 +641,8 @@ static void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned in
   GLuint error;
   int dh;
 
+  YuiMsg("Realloc\n");
+
 #ifdef VDP1_TEXTURE_ASYNC
   if ((tm == YglTM_vdp1[0]) || (tm == YglTM_vdp1[1]))
     waitVdp1Textures(1);
