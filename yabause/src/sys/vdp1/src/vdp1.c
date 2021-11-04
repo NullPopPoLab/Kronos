@@ -31,7 +31,7 @@
 #include "debug.h"
 #include "scu.h"
 #include "vdp2.h"
-#include "vidsoft.h"
+#include "vidogl.h"
 #include "threads.h"
 #include "sh2core.h"
 #include "ygl.h"
@@ -2288,7 +2288,7 @@ void Vdp1HBlankIN(void)
     }
   }
   #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
-    if (VIDCore != NULL && VIDCore->id != VIDCORE_SOFT) YglTMCheck();
+    if (VIDCore != NULL && VIDCore->id == VIDCORE_OGL) YglTMCheck();
   #endif
 }
 //////////////////////////////////////////////////////////////////////////////

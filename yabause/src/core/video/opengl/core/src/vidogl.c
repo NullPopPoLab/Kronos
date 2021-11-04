@@ -3474,7 +3474,9 @@ void VIDOGLVdp1Draw()
   fount++;
 #endif
 
-  YglTmPull(YglTM_vdp1[_Ygl->drawframe], 0);
+  if (VIDCore != NULL && VIDCore->id == VIDCORE_OGL) {
+    YglTmPull(YglTM_vdp1[_Ygl->drawframe], 0);
+  }
 
   int firstalpha = (Vdp2External.perline_alpha_draw[0] & 0x40);
   int prioChanged = 0;
