@@ -35,7 +35,6 @@ void FASTCALL Vdp2NBG0PlaneAddr(vdp2draw_struct *info, int i, Vdp2* regs)
 {
    u32 offset = (regs->MPOFN & 0x7) << 6;
    u32 tmp=0;
-
    switch(i)
    {
       case 0:

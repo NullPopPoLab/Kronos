@@ -412,6 +412,7 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 			core/video/opengl/compute_shader/src/yglcs.c
 			core/video/opengl/compute_shader/src/vidcs.c
 			core/video/opengl/compute_shader/src/vdp1_compute.c
+			core/video/opengl/compute_shader/src/nbg_compute.c
 		)
 		set(kronos_HEADERS
 			${kronos_HEADERS}
@@ -419,6 +420,8 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 			core/video/opengl/compute_shader/include/vidcs.h
 			core/video/opengl/compute_shader/include/vdp1_compute.h
 			core/video/opengl/compute_shader/include/vdp1_prog_compute.h
+			core/video/opengl/compute_shader/include/nbg_compute.h
+			core/video/opengl/compute_shader/include/nbg_prog_compute.h
 		)
 	endif(OPENGL_SUPPORTED)
 endif ()

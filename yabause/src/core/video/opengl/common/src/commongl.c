@@ -600,8 +600,10 @@ void YglTMReset(YglTextureManager * tm  ) {
 
 void YglTmPush(YglTextureManager * tm){
 #ifdef VDP1_TEXTURE_ASYNC
-  if ((tm == YglTM_vdp1[0]) || (tm == YglTM_vdp1[1]))
+  if ((tm == YglTM_vdp1[0]) || (tm == YglTM_vdp1[1])) {
+    YuiMsg("Wait texture vdp1\n");
     waitVdp1Textures(1);
+  }
   else WaitVdp2Async(1);
 #endif
   YabThreadLock(tm->mtx);
@@ -644,8 +646,10 @@ static void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned in
   YuiMsg("Realloc\n");
 
 #ifdef VDP1_TEXTURE_ASYNC
-  if ((tm == YglTM_vdp1[0]) || (tm == YglTM_vdp1[1]))
+  if ((tm == YglTM_vdp1[0]) || (tm == YglTM_vdp1[1])) {
+    YuiMsg("Wait texture vdp1\n");
     waitVdp1Textures(1);
+  }
   else WaitVdp2Async(1);
 #endif
 
@@ -701,6 +705,7 @@ static void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned in
 void YglTMCheck()
 {
   YglTextureManager * tm = YglTM_vdp1[_Ygl->drawframe];
+  YuiMsg("Use texture vdp1 %s %d %d %d\n", __FILE__, __LINE__, tm->width, tm->height);
   if ((tm->width > 2048) || (tm->height > 2048)) {
     executeTMVDP1(_Ygl->drawframe,_Ygl->drawframe);
     YglTMRealloc(tm, 1024, 1024);
@@ -1020,6 +1025,7 @@ static int YglDestroyScreenBuffer(){
     glDeleteTextures(SPRITE,&_Ygl->screen_fbotex[0]);
     _Ygl->screen_fbotex[0] = 0;
   }
+
   if (_Ygl->screen_fbo != 0){
     glDeleteFramebuffers(1, &_Ygl->screen_fbo);
     _Ygl->screen_fbo = 0;
@@ -1481,6 +1487,7 @@ YglProgram * YglGetProgram( YglSprite * input, int prg, YglTextureManager *tm, i
    }
 
    if(tm == YglTM_vdp1[_Ygl->drawframe]){
+     YuiMsg("Use texture vdp1 %s %d\n", __FILE__, __LINE__);
      level = &_Ygl->vdp1levels[_Ygl->drawframe];
    } else {
      level = &_Ygl->vdp2levels[input->idScreen];
@@ -2554,15 +2561,18 @@ void executeTMVDP1(int in, int out) {
   int switchTM = 0;
   if (_Ygl->needVdp1Render != 0){
     switchTM = 1;
+    YuiMsg("Use texture vdp1 %s %d\n", __FILE__, __LINE__);
     YglTmPush(YglTM_vdp1[in]);
     _Ygl->needVdp1Render = 0;
     //YuiUseOGLOnThisThread();
     YglRenderVDP1();
     //YuiRevokeOGLOnThisThread();
     YglReset(_Ygl->vdp1levels[out]);
+    YuiMsg("Use texture vdp1 %s %d\n", __FILE__, __LINE__);
     YglTmPull(YglTM_vdp1[out], 0);
   }
   if ((in != out) && (switchTM==0)) {
+    YuiMsg("Use texture vdp1 %s %d\n", __FILE__, __LINE__);
     YglTmPush(YglTM_vdp1[in]);
     YglTmPull(YglTM_vdp1[out], 0);
   }
@@ -2592,6 +2602,7 @@ static int renderVDP1Level( YglLevel * level, int j, int* cprg, YglMatrix *mat, 
     }
 
     if(level->prg[j].setupUniform) {
+      YuiMsg("Use texture vdp1 %s %d\n", __FILE__, __LINE__);
       level->prg[j].setupUniform((void*)&level->prg[j], YglTM_vdp1[_Ygl->drawframe], varVdp2Regs, SPRITE);
     }
     if( level->prg[j].currentQuad != 0 ) {
@@ -2621,6 +2632,7 @@ static int renderVDP1Level( YglLevel * level, int j, int* cprg, YglMatrix *mat, 
       }
     }
     if( level->prg[j].cleanupUniform ){
+      YuiMsg("Use texture vdp1 %s %d\n", __FILE__, __LINE__);
       level->prg[j].cleanupUniform((void*)&level->prg[j], YglTM_vdp1[_Ygl->drawframe]);
     }
   _Ygl->min_fb_x = 1024;
@@ -2679,6 +2691,7 @@ void YglRenderVDP1(void) {
   glEnable(GL_SCISSOR_TEST);
 
   glActiveTexture(GL_TEXTURE0);
+  YuiMsg("Use texture vdp1 %s %d\n", __FILE__, __LINE__);
   glBindTexture(GL_TEXTURE_2D, YglTM_vdp1[_Ygl->drawframe]->textureID);
 
   if (_Ygl->vdp1_stencil_mode != 0) {

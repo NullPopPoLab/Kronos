@@ -96,7 +96,7 @@ int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
       glDisableVertexAttribArray(prg->vaid);
     }
   }
-
+YuiMsg("Use texture vdp1 %s %d\n", __FILE__, __LINE__);
   glUniform2f(prg->ids->texsize, YglTM_vdp1[_Ygl->drawframe]->width, YglTM_vdp1[_Ygl->drawframe]->height);
   glUniform3i(prg->ids->sysclip, (int)(prg->systemClipX2 * _Ygl->vdp1wratio), (int)(prg->systemClipY2 * _Ygl->vdp1hratio), _Ygl->vdp1height);
 
