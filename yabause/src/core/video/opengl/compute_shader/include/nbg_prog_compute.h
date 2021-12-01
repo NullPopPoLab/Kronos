@@ -44,8 +44,9 @@ static const char nbg_cell_cram_mode_1_f[] =
 "//CRAM Mode 1\n"
 "uint ReadCramValue(uint index, uint line) {\n"
 "   uint colorval = 0u; \n"
-"   colorval = cram[(index << 1u) + 0x1000u * line]; \n"
-"   if ((index & 0x01u) != 0u) { colorval >>= 16; } \n"
+"   index = ((index<<1)&0xFFFu); \n"
+"   colorval = cram[index >> 2 + 0x1000u * line]; \n"
+"   if ((index & 0x02u) != 0u) { colorval >>= 16; } \n"
 "   return colorval & 0xFFFFu; \n"
 "}\n"
 "vec4 ReadCramColor(uint index, uint line) {\n"
@@ -106,12 +107,13 @@ static const char nbg_cell_8x8_main_f[] =
 "void main()\n"
 "{\n"
 "uint idCmd = gl_WorkGroupID.x * 10;\n"
-"ivec2 texel = ivec2(cmd[idCmd]+gl_LocalInvocationID.x,cmd[idCmd+1]+gl_LocalInvocationID.y);\n"
 "ivec2 size = imageSize(outSurface);\n"
+"ivec2 texel = ivec2(cmd[idCmd]+gl_LocalInvocationID.x,size.y-(cmd[idCmd+1]+gl_LocalInvocationID.y));\n"
 "vec4 outcolor = vec4(0.0);\n"
 "uint cellw = cmd[idCmd+8];\n"
 "uint cellh = cmd[idCmd+9];\n"
 "if (texel.x >= size.x || texel.y >= size.y ) return;\n" //Texel n'est pas bon. Il doit prendre le x/y d'netree
+"if (texel.x < 0 || texel.y < 0 ) return;\n" //Texel n'est pas bon. Il doit prendre le x/y d'netree
 "uint coloroffset = cmd[idCmd+3];\n"
 "uint paladdr = cmd[idCmd+4];\n"
 "uint priority = cmd[idCmd+5];\n"
@@ -121,6 +123,7 @@ static const char nbg_cell_8x8_main_f[] =
 "uint charaddr = cmd[idCmd+2]+ gl_LocalInvocationID.y*cellw/2 + gl_LocalInvocationID.x/2;\n";
 
 static const char nbg_4bpp[] =
+"//4bpp\n"
 "uint dot = (readVdp2RamWord(charaddr) >> uint(4*(3-mod(texel.x,4)))) & 0xFu;\n"
 "uint cramindex = coloroffset + ((paladdr << 4u) | (dot));\n";
 

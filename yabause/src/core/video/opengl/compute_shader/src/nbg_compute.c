@@ -192,15 +192,17 @@ static void initNBGCompute() {
 
 }
 
-void CSDrawNBGCell(vdp2draw_struct* info, int** cmdList, int nbCmd) {
+void CSDrawNBGCell(vdp2draw_struct* info, int** cmdList) {
 
   if (ssbo_vram_ == 0) initNBGCompute();
 
-  int work_groups_x = nbCmd*8 / NBG_CS_LOCAL_SIZE_X;
+  YuiMsg("Draw id %x colnum %d\n", info->idScreen, info->colornumber);
+
+  int work_groups_x = info->NbCell*8 / NBG_CS_LOCAL_SIZE_X;
 
   int id = createNBGCellProgram(info);
   glUseProgram(id);
-  YuiMsg("Use Program %d for nbCmd = %d\n", id, nbCmd);
+  YuiMsg("Use Program %d for nbCmd = %d\n", id, info->NbCell);
 
   //Vdp2Ram
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vram_);
@@ -208,7 +210,7 @@ void CSDrawNBGCell(vdp2draw_struct* info, int** cmdList, int nbCmd) {
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_vram_);
 
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cmd_);
-  glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, nbCmd*10*sizeof(int), (void*)cmdList);
+  glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, info->NbCell*10*sizeof(int), (void*)cmdList);
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo_cmd_);
 
   if (info->colornumber < 3) {

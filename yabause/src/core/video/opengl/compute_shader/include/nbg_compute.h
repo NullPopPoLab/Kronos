@@ -5,6 +5,6 @@
 #include "ygl.h"
 #include "vdp2.h"
 
-extern void CSDrawNBGCell(vdp2draw_struct* info, int** cmdList, int nbCmd);
+extern void CSDrawNBGCell(vdp2draw_struct* info, int** cmdList);
 
 #endif // __NBG_COMPUTE_H__
