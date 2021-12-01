@@ -352,17 +352,23 @@ static void requestDrawCellOrderCPU(vdp2draw_struct * info, YglTexture *texture,
   }
 }
 
-int NBG0CmdList[16384][4];
+int NBG0CmdList[0x4000][10];
 int NBG0Cell = 0;
 
 static void DrawCellOrderCS(vdp2draw_struct * info, int x, int y) {
+  YuiMsg("Add Cell @ (%d,%d)\n",x, y);
   //Gerer le cellQuad
   int *cmd = NBG0CmdList[NBG0Cell++];
-  cmd[0] = info->colornumber; //Fixe par plan useless...
-  cmd[1] = info->cellh;
-  cmd[2] = info->cellw;
-  cmd[3] = info->charaddr;
-  //On doit faire gaffe au colornumber et au mosaicx pour utiliser PG_VDP2_NORMAL, PG_VDP2_MOSAIC ou PG_VDP2_NORMAL_CRAM ou PG_VDP2_MOSAIC_CRAM
+  cmd[0] = x;
+  cmd[1] = y;
+  cmd[2] = info->charaddr;
+  cmd[3] = info->coloroffset;
+  cmd[4] = info->paladdr;
+  cmd[5] = info->priority;
+  cmd[6] = info->specialcode;
+  cmd[7] = info->alpha;
+  cmd[8] = info->cellw;
+  cmd[9] = info->cellh;
 }
 #endif
 
@@ -1382,35 +1388,19 @@ INLINE void Vdp2SetSpecialPriority(vdp2draw_struct *info, u8 dot, u32 *prio, u32
 
 static INLINE u32 Vdp2GetCCOn(vdp2draw_struct *info, u8 dot, u32 cramindex, Vdp2 *varVdp2Regs) {
 
-  const int CCMD = ((varVdp2Regs->CCCTL >> 8) & 0x01);  // hard/vdp2/hon/p12_14.htm#CCMD_
   int cc = 1;
-  if (CCMD == 0) {  // Calculate Rate mode
-    switch (info->specialcolormode)
-    {
-    case 1: if (info->specialcolorfunction == 0) { cc = 0; } break;
-    case 2:
-      if (info->specialcolorfunction == 0) { cc = 0; }
-      else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { cc = 0; } }
-      break;
-   case 3:
-     if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) { cc = 0; }
-     break;
-    }
-  }
-  else {  // Calculate Add mode
-    switch (info->specialcolormode)
-    {
-    case 1:
-      if (info->specialcolorfunction == 0) { cc = 0; }
-      break;
-    case 2:
-      if (info->specialcolorfunction == 0) { cc = 0; }
-      else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { cc = 0; } }
-      break;
-   case 3:
-     if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) { cc = 0; }
-     break;
-    }
+  switch (info->specialcolormode)
+  {
+  case 1:
+    if (info->specialcolorfunction == 0) { cc = 0; }
+    break;
+  case 2:
+    if (info->specialcolorfunction == 0) { cc = 0; }
+    else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { cc = 0; } }
+    break;
+ case 3:
+   if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) { cc = 0; }
+   break;
   }
   return cc;
 }
@@ -6122,6 +6112,7 @@ PRINT_STAT("NBG3")
 PRINT_STAT("NBG2")
   Vdp2DrawNBG1(&Vdp2Lines[VDP2_DRAW_LINE]);
 PRINT_STAT("NBG1")
+  NBG0Cell = 0;
   Vdp2DrawNBG0(&Vdp2Lines[VDP2_DRAW_LINE]);
   if (NBG0Cell != 0) {
     CSDrawNBGCell(&infoNBG0, NBG0CmdList, NBG0Cell);

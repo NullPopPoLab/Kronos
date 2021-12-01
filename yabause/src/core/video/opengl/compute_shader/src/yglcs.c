@@ -282,7 +282,10 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
       glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->screen_fbo);
       glDrawBuffers(1, &DrawBuffers[i]);
     }
-    drawScreen[i] = DrawVDP2Screen(varVdp2Regs, i);
+    if ( i != NBG0)
+      drawScreen[i] = DrawVDP2Screen(varVdp2Regs, i);
+    else
+      drawScreen[i] = 1;
   }
 
   const int vdp2screens[] = {RBG0, RBG1, NBG0, NBG1, NBG2, NBG3};
