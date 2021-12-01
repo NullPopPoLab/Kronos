@@ -246,7 +246,7 @@ static const char nbg_cram_mosaic[] =
 
 static const char nbg_end_f[] =
 //"Color = (Color&0xFEFFFFu) | (cc << 16) | ((0xF8u | priority)<<24);\n";
-"imageStore(outSurface,texel,outcolor);\n;"
+"imageStore(outSurface,texel,outcolor);\n"
 "}\n";
 
 
