@@ -2,6 +2,7 @@
 
 #include "nbg_prog_compute.h"
 
+#define NB_PRG_VDP2 (1<<14)
 
 static GLuint prg_vdp2[NB_PRG_VDP2] = {0};
 
@@ -57,8 +58,8 @@ static int getProgramId(vdp2draw_struct *info) {
 	rank += 2;
   //Start Type => all the same
   rank += 0;
-  //Colortype => All the same for the moment
-  rank += 0;
+  id |= info->colornumber;
+  rank += 3;
   //Transparency ==> 2 values
 
   if (info->transparencyenable) id |= 0 <<rank;
@@ -108,7 +109,7 @@ static int getProgramId(vdp2draw_struct *info) {
 }
 
 static GLuint createNBGCellProgram(vdp2draw_struct *info) {
-	const GLchar * a_prg_vdp2_map[9];
+	const GLchar * a_prg_vdp2_map[10];
 	int nbProg = 0;
 	int progId = getProgramId(info);
 	if (prg_vdp2[progId] == 0) {
@@ -121,9 +122,26 @@ static GLuint createNBGCellProgram(vdp2draw_struct *info) {
 				else if (Vdp2Internal.ColorMode == 2) a_prg_vdp2_map[nbProg++]= nbg_cell_cram_mode_2_f;
 			}
 			a_prg_vdp2_map[nbProg++]= nbg_cell_8x8_main_f;
-			a_prg_vdp2_map[nbProg++]= nbg_4bpp;
+      switch(info->colornumber) {
+        case 0: // 4 BPP
+          a_prg_vdp2_map[nbProg++]= nbg_4bpp;
+          break;
+        case 1: // 8 BPP
+          a_prg_vdp2_map[nbProg++]= nbg_8bpp;
+          break;
+        case 2: // 16 BPP(palette)
+          a_prg_vdp2_map[nbProg++]= nbg_16bpp;
+          break;
+        case 3: // 16 BPP(RGB)
+          a_prg_vdp2_map[nbProg++]= nbg_16bpp_rgb;
+          break;
+        case 4: // 32 BPP
+          a_prg_vdp2_map[nbProg++]= nbg_32bpp;
+          break;
+      }
+
 			//Transparency
-			if (info->transparencyenable) a_prg_vdp2_map[nbProg++]= nbg_transparency_4bpp;
+			if (info->transparencyenable) a_prg_vdp2_map[nbProg++]= nbg_transparency;
 			else a_prg_vdp2_map[nbProg++] = nbg_no_transparency;
       //SpecialPriority
 			if (info->specialprimode == 2) {

@@ -356,7 +356,7 @@ static void requestDrawCellOrderCPU(vdp2draw_struct * info, YglTexture *texture,
 int NBGCmdList[0x4000][10];
 
 static void DrawCellOrderCS(vdp2draw_struct * info, int x, int y) {
-  // YuiMsg("Add Cell @ (%d,%d)\n",x, y);
+  YuiMsg("Add Cell(%dx%d) @ (%d,%d)\n",info->cellw, info->cellh, x, y);
   //Gerer le cellQuad
   int *cmd = NBGCmdList[info->NbCell++];
   cmd[0] = x;

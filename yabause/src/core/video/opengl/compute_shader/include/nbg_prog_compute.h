@@ -13,8 +13,6 @@
 #define QuoteIdent(ident) #ident
 #define Stringify(macro) QuoteIdent(macro)
 
-#define NB_PRG_VDP2 (1<<11)
-
 static const char nbg_cell_cram_mode_0_f[] =
 "layout(std430, binding = 3) readonly buffer VDP2C { uint cram[]; };\n"
 "//CRAM Mode 0\n"
@@ -25,14 +23,13 @@ static const char nbg_cell_cram_mode_0_f[] =
 "   if ((index & 0x02u) != 0u) { colorval >>= 16; } \n"
 "   return colorval & 0xFFFFu; \n"
 "}\n"
-"vec4 ReadCramColor(uint index, uint line) {\n"
+"vec4 ReadCramColor(uint index, uint line, uint colorcalc) {\n"
 "   uint colorVal = ReadCramValue(index, line);\n"
-"   uint cc = (colorVal >> 15u)&0x1u;\n"
 "   vec4 color = vec4(0.0);\n"
 "   color.r = float((colorVal & 0x1Fu) << 3u)/255.0;\n"
 "   color.g = float(((colorVal>>5) & 0x1Fu) << 3u)/255.0;\n"
 "   //We are passing the MSB CC as LSB ob blue color\n"
-"   color.b = float((((colorVal>>10) & 0x1Fu) << 3u)|cc)/255.0;\n"
+"   color.b = float((((colorVal>>10) & 0x1Fu) << 3u)|colorcalc)/255.0;\n"
 "   return color;\n"
 "}\n"
 "uint get_cram_msb(uint index, uint line) { \n"
@@ -49,14 +46,13 @@ static const char nbg_cell_cram_mode_1_f[] =
 "   if ((index & 0x02u) != 0u) { colorval >>= 16; } \n"
 "   return colorval & 0xFFFFu; \n"
 "}\n"
-"vec4 ReadCramColor(uint index, uint line) {\n"
+"vec4 ReadCramColor(uint index, uint line, uint colorcalc) {\n"
 "   uint colorVal = ReadCramValue(index, line);\n"
-"   uint cc = (colorVal >> 15u)&0x1u;\n"
 "   vec4 color = vec4(0.0);\n"
 "   color.r = float((colorVal & 0x1Fu) << 3u)/255.0;\n"
 "   color.g = float(((colorVal>>5) & 0x1Fu) << 3u)/255.0;\n"
 "//We are passing the MSB CC as LSB ob blue color\n"
-"   color.b = float((((colorVal>>10) & 0x1Fu) << 3u)|cc)/255.0;\n"
+"   color.b = float((((colorVal>>10) & 0x1Fu) << 3u)|colorcalc)/255.0;\n"
 "   return color;\n"
 "}\n"
 "uint get_cram_msb(uint index, uint line) { \n"
@@ -71,14 +67,13 @@ static const char nbg_cell_cram_mode_2_f[] =
 "   colorval = cram[index + 0x1000u * line]; \n"
 "   return colorval; \n"
 "}\n"
-"vec4 ReadCramColor(uint index, uint line) {\n"
+"vec4 ReadCramColor(uint index, uint line, uint colorcalc) {\n"
 "   uint colorVal = ReadCramValue(index, line);\n"
-"   uint cc = (colorVal >> 31u)&0x1u;\n"
 "   vec4 color = vec4(0.0);\n"
 "   color.r = float(colorVal & 0xFFu)/255.0;\n"
 "   color.g = float((colorVal>>8) & 0xFFu)/255.0;\n"
 "//We are passing the MSB CC as LSB ob blue color\n"
-"   color.b = float(((colorVal>>16) & 0xFEu)|cc)/255.0;\n"
+"   color.b = float(((colorVal>>16) & 0xFEu)|colorcalc)/255.0;\n"
 "   return color;\n"
 "}\n"
 "uint get_cram_msb(uint index, uint line) { \n"
@@ -119,16 +114,42 @@ static const char nbg_cell_8x8_main_f[] =
 "uint priority = cmd[idCmd+5];\n"
 "uint cc = 1u;\n"
 "uint specialcode = cmd[idCmd+6];\n"
-"uint alpha = cmd[idCmd+7];\n"
-"uint charaddr = cmd[idCmd+2]+ gl_LocalInvocationID.y*cellw/2 + gl_LocalInvocationID.x/2;\n";
+"uint alpha = cmd[idCmd+7];\n";
 
 static const char nbg_4bpp[] =
 "//4bpp\n"
-"uint dot = (readVdp2RamWord(charaddr) >> uint(4*(3-mod(texel.x,4)))) & 0xFu;\n"
+"uint charaddr = cmd[idCmd+2]+ gl_LocalInvocationID.y*cellw/2 + gl_LocalInvocationID.x/2;\n"
+"uint dot = (readVdp2RamWord(charaddr) >> uint(4*(3-(texel.x&0x3u)))) & 0xFu;\n"
 "uint cramindex = coloroffset + ((paladdr << 4u) | (dot));\n";
 
-static const char nbg_transparency_4bpp[] =
-"if ((dot & 0xFu) == 0x0u) {\n"
+static const char nbg_8bpp[] =
+"//8bpp\n"
+"uint charaddr = cmd[idCmd+2]+ gl_LocalInvocationID.y*cellw + gl_LocalInvocationID.x;\n"
+"uint dot = (readVdp2RamWord(charaddr) >> uint(8*(1-(texel.x&0x1u)))) & 0xFFu;\n"
+"uint cramindex = coloroffset + ((paladdr << 4u) | (dot));\n";
+
+static const char nbg_16bpp[] =
+"//16bpp\n"
+"uint charaddr = cmd[idCmd+2]+ (gl_LocalInvocationID.y*cellw + gl_LocalInvocationID.x) >> 1;\n"
+"uint dot = (readVdp2RamWord(charaddr) & 0xFFFFu;\n"
+"uint cramindex = coloroffset + dot;\n";
+
+static const char nbg_16bpp_rgb[] =
+"//16bpp_rgb\n"
+//Pas bon la
+"uint charaddr = cmd[idCmd+2]+ (gl_LocalInvocationID.y*cellw + gl_LocalInvocationID.x) >> 1;\n"
+"uint dot = (readVdp2RamWord(charaddr) & 0xFFFFu;\n"
+"uint cramindex = coloroffset + dot;\n";
+
+static const char nbg_32bpp[] =
+"//32bpp\n"
+//Pas bon la
+"uint charaddr = cmd[idCmd+2]+ (gl_LocalInvocationID.y*cellw + gl_LocalInvocationID.x) >> 2;\n"
+"uint dot = (readVdp2RamWord(charaddr) & 0xFFFFFFFFu;\n"
+"uint cramindex = coloroffset + dot;\n";
+
+static const char nbg_transparency[] =
+"if (dot == 0x0u) {\n"
 "  imageStore(outSurface,texel,vec4(0.0));\n"
 "  return;\n"
 "}\n";
@@ -212,16 +233,16 @@ static const char nbg_normal_mosaic[] =
 static const char nbg_cram[] =
 //Do not use line yet
 //"outcolor = ReadCramColor(cramindex, texel.y);\n"
-"outcolor = ReadCramColor(cramindex, 0);\n"
+"outcolor = ReadCramColor(cramindex, 0, cc);\n"
 "outcolor.a = float(alpha & 0xF8u | priority)/255.0;\n"
-"if (alpha == 0u) outcolor = vec4(0.0);\n";
+"if (outcolor.a == 0u) outcolor = vec4(0.0);\n";
 
 static const char nbg_cram_mosaic[] =
 //Do not use line yet
 //"outcolor = ReadCramColor(cramindex, texel.y);\n"
-"outcolor = ReadCramColor(cramindex, 0);\n"
+"outcolor = ReadCramColor(cramindex, 0, cc);\n"
 "outcolor.a = float(alpha & 0xF8u | priority)/255.0;\n"
-"if (alpha == 0u) outcolor = vec4(0.0);\n";
+"if (outcolor.a == 0u) outcolor = vec4(0.0);\n";
 
 static const char nbg_end_f[] =
 //"Color = (Color&0xFEFFFFu) | (cc << 16) | ((0xF8u | priority)<<24);\n";

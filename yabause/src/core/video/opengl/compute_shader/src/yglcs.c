@@ -138,6 +138,18 @@ GLuint GetCSVDP1fb(int id) {
   else return get_vdp1_mesh(_Ygl->readframe);
 }
 
+static int isNBG(int id) {
+  switch(id) {
+    case NBG0:
+    case NBG1:
+    case NBG2:
+    case NBG3:
+        return 1;
+    default:
+        return 0;
+  }
+}
+
 void YglCSRender(Vdp2 *varVdp2Regs) {
 
    GLuint cprg=0;
@@ -282,7 +294,7 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
       glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->screen_fbo);
       glDrawBuffers(1, &DrawBuffers[i]);
     }
-    if ( i != NBG0)
+    if ( isNBG(i) == 0)
       drawScreen[i] = DrawVDP2Screen(varVdp2Regs, i);
     else
       drawScreen[i] = 1;
