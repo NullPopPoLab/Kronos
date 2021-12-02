@@ -4,11 +4,7 @@
 #include "ygl.h"
 
 //Manque Window
-//Manque multiple Format
 //Manque perline
-
-#define NBG_CS_LOCAL_SIZE_X 8
-#define NBG_CS_LOCAL_SIZE_Y 8
 
 #define QuoteIdent(ident) #ident
 #define Stringify(macro) QuoteIdent(macro)
@@ -88,7 +84,16 @@ SHADER_VERSION_COMPUTE
 "#ifdef GL_ES\n"
 "precision highp float;\n"
 "#endif\n"
-"layout(local_size_x = "Stringify(NBG_CS_LOCAL_SIZE_X)", local_size_y = "Stringify(NBG_CS_LOCAL_SIZE_Y)") in;\n"
+"layout(local_size_x = 8, local_size_y = 8) in;\n";
+
+static const char nbg_cell_16x16_header_f[] =
+SHADER_VERSION_COMPUTE
+"#ifdef GL_ES\n"
+"precision highp float;\n"
+"#endif\n"
+"layout(local_size_x = 16, local_size_y = 16) in;\n";
+
+static const char nbg_cell_header_f[] =
 "layout(rgba8, binding = 0) writeonly uniform image2D outSurface;\n"
 "layout(std430, binding = 1) readonly buffer VDP2 { uint vram[]; };\n"
 "layout(std430, binding = 2) readonly buffer CMD { uint cmd[]; };\n"
@@ -98,7 +103,7 @@ SHADER_VERSION_COMPUTE
 "   return ((((data) >> 8u) & 0xFFu) | ((data) & 0xFFu) << 8u);\n"
 "}\n";
 
-static const char nbg_cell_8x8_main_f[] =
+static const char nbg_cell_main_f[] =
 "void main()\n"
 "{\n"
 "uint idCmd = gl_WorkGroupID.x * 10;\n"
@@ -107,48 +112,51 @@ static const char nbg_cell_8x8_main_f[] =
 "vec4 outcolor = vec4(0.0);\n"
 "uint cellw = cmd[idCmd+8];\n"
 "uint cellh = cmd[idCmd+9];\n"
-"if (texel.x >= size.x || texel.y >= size.y ) return;\n" //Texel n'est pas bon. Il doit prendre le x/y d'netree
-"if (texel.x < 0 || texel.y < 0 ) return;\n" //Texel n'est pas bon. Il doit prendre le x/y d'netree
+"if (texel.x >= size.x || texel.y >= size.y ) return;\n"
+"if (texel.x < 0 || texel.y < 0 ) return;\n"
 "uint coloroffset = cmd[idCmd+3];\n"
 "uint paladdr = cmd[idCmd+4];\n"
 "uint priority = cmd[idCmd+5];\n"
 "uint cc = 1u;\n"
 "uint specialcode = cmd[idCmd+6];\n"
-"uint alpha = cmd[idCmd+7];\n";
+"uint alpha = cmd[idCmd+7];\n"
+"ivec2 cellCoord = ivec2(mod(gl_LocalInvocationID.xy, 8));\n"
+"uint idCellOffset  = ((uint(gl_LocalInvocationID.y)/8u)*2u + (uint(gl_LocalInvocationID.x)/8u)) * 64u;\n";
 
 static const char nbg_4bpp[] =
 "//4bpp\n"
-"uint charaddr = cmd[idCmd+2]+ gl_LocalInvocationID.y*cellw/2 + gl_LocalInvocationID.x/2;\n"
+"uint charaddr = cmd[idCmd+2]+ (idCellOffset + cellCoord.y*8u + cellCoord.x)>>1;\n"
 "uint dot = (readVdp2RamWord(charaddr) >> uint(4*(3-(texel.x&0x3u)))) & 0xFu;\n"
 "uint cramindex = coloroffset + ((paladdr << 4u) | (dot));\n";
 
 static const char nbg_8bpp[] =
 "//8bpp\n"
-"uint charaddr = cmd[idCmd+2]+ gl_LocalInvocationID.y*cellw + gl_LocalInvocationID.x;\n"
+"uint charaddr = cmd[idCmd+2]+ (idCellOffset + cellCoord.y*8u + cellCoord.x);\n"
 "uint dot = (readVdp2RamWord(charaddr) >> uint(8*(1-(texel.x&0x1u)))) & 0xFFu;\n"
 "uint cramindex = coloroffset + ((paladdr << 4u) | (dot));\n";
 
 static const char nbg_16bpp[] =
 "//16bpp\n"
-"uint charaddr = cmd[idCmd+2]+ (gl_LocalInvocationID.y*cellw + gl_LocalInvocationID.x) >> 1;\n"
+"uint charaddr = cmd[idCmd+2]+ (idCellOffset + cellCoord.y*8u + cellCoord.x)<<1;\n"
 "uint dot = (readVdp2RamWord(charaddr) & 0xFFFFu;\n"
 "uint cramindex = coloroffset + dot;\n";
 
 static const char nbg_16bpp_rgb[] =
 "//16bpp_rgb\n"
 //Pas bon la
-"uint charaddr = cmd[idCmd+2]+ (gl_LocalInvocationID.y*cellw + gl_LocalInvocationID.x) >> 1;\n"
+"uint charaddr = cmd[idCmd+2]+ (idCellOffset + cellCoord.y*8u + cellCoord.x)<<1;\n"
 "uint dot = (readVdp2RamWord(charaddr) & 0xFFFFu;\n"
 "uint cramindex = coloroffset + dot;\n";
 
 static const char nbg_32bpp[] =
 "//32bpp\n"
 //Pas bon la
-"uint charaddr = cmd[idCmd+2]+ (gl_LocalInvocationID.y*cellw + gl_LocalInvocationID.x) >> 2;\n"
+"uint charaddr = cmd[idCmd+2]+ (idCellOffset + cellCoord.y*8u + cellCoord.x)<<2;\n"
 "uint dot = (readVdp2RamWord(charaddr) & 0xFFFFFFFFu;\n"
 "uint cramindex = coloroffset + dot;\n";
 
 static const char nbg_transparency[] =
+"//Transparency On\n"
 "if (dot == 0x0u) {\n"
 "  imageStore(outSurface,texel,vec4(0.0));\n"
 "  return;\n"

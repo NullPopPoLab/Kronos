@@ -356,8 +356,6 @@ static void requestDrawCellOrderCPU(vdp2draw_struct * info, YglTexture *texture,
 int NBGCmdList[0x4000][10];
 
 static void DrawCellOrderCS(vdp2draw_struct * info, int x, int y) {
-  YuiMsg("Add Cell(%dx%d) @ (%d,%d)\n",info->cellw, info->cellh, x, y);
-  //Gerer le cellQuad
   int *cmd = NBGCmdList[info->NbCell++];
   cmd[0] = x;
   cmd[1] = y;
@@ -367,8 +365,15 @@ static void DrawCellOrderCS(vdp2draw_struct * info, int x, int y) {
   cmd[5] = info->priority;
   cmd[6] = info->specialcode;
   cmd[7] = info->alpha;
-  cmd[8] = info->cellw;
-  cmd[9] = info->cellh;
+  if (info->patternwh == 2) {
+    YuiMsg("Add Quad Cell(%dx%d) @ (%d,%d)\n",info->cellw, info->cellh, x, y);
+    cmd[8] = info->cellw;
+    cmd[9] = info->cellh;
+  } else {
+    YuiMsg("Add Single Cell(%dx%d) @ (%d,%d)\n",info->cellw, info->cellh, x, y);
+    cmd[8] = info->cellw;
+    cmd[9] = info->cellh;
+  }
 }
 #endif
 
@@ -408,9 +413,22 @@ static void executeDrawCell() {
 #endif
 }
 
+static int isNBGScreen(int id) {
+  switch(id) {
+    case NBG0:
+    case NBG1:
+    case NBG2:
+    case NBG3:
+        return 1;
+    default:
+        return 0;
+  }
+}
+
 static void requestDrawCell(vdp2draw_struct * info, YglTexture *texture, Vdp2* varVdp2Regs) {
 #ifdef CELL_ASYNC
-  if ((VIDCore->id != VIDCORE_CS) || (info->idScreen != NBG0))
+  if ((VIDCore->id != VIDCORE_CS) || (isNBGScreen(info->idScreen) == 0))
+  //ICI
      requestDrawCellOrderCPU(info, texture, varVdp2Regs, CELL_SINGLE);
 #else
          Vdp2DrawCell_in_sync(info, texture, varVdp2Regs);
@@ -419,7 +437,7 @@ static void requestDrawCell(vdp2draw_struct * info, YglTexture *texture, Vdp2* v
 
 static void requestDrawCellQuad(vdp2draw_struct * info, YglTexture *texture, Vdp2* varVdp2Regs) {
 #ifdef CELL_ASYNC
-  if ((VIDCore->id != VIDCORE_CS) || (info->idScreen != NBG0))
+  if ((VIDCore->id != VIDCORE_CS) || (isNBGScreen(info->idScreen) == 0))
     requestDrawCellOrderCPU(info, texture, varVdp2Regs, CELL_QUAD);
 #else
    Vdp2DrawCell_in_sync(info, texture, varVdp2Regs);
@@ -1914,18 +1932,6 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
       break;
     }
     texture->textdata += texture->w;
-  }
-}
-
-static int isNBGScreen(int id) {
-  switch(id) {
-    case NBG0:
-    case NBG1:
-    case NBG2:
-    case NBG3:
-        return 1;
-    default:
-        return 0;
   }
 }
 

@@ -2,7 +2,7 @@
 
 #include "nbg_prog_compute.h"
 
-#define NB_PRG_VDP2 (1<<14)
+#define NB_PRG_VDP2 (1<<15)
 
 static GLuint prg_vdp2[NB_PRG_VDP2] = {0};
 
@@ -49,6 +49,8 @@ static int getProgramId(vdp2draw_struct *info) {
   int id = 0;
   int rank = 0;
 	//Cram accesses
+  if (info->patternwh == 2) id |= 1 << rank;
+  rank += 1;
 	if (info->colornumber >= 3) id |= 0 << rank;
 	else {
 		if (Vdp2Internal.ColorMode == 0)  id |= 1 << rank;
@@ -109,19 +111,21 @@ static int getProgramId(vdp2draw_struct *info) {
 }
 
 static GLuint createNBGCellProgram(vdp2draw_struct *info) {
-	const GLchar * a_prg_vdp2_map[10];
+	const GLchar * a_prg_vdp2_map[11];
 	int nbProg = 0;
 	int progId = getProgramId(info);
 	if (prg_vdp2[progId] == 0) {
 		  //CRAM access
-			a_prg_vdp2_map[nbProg++]= nbg_cell_8x8_header_f;
+      if (info->patternwh == 2) a_prg_vdp2_map[nbProg++]= nbg_cell_16x16_header_f;
+			else a_prg_vdp2_map[nbProg++]= nbg_cell_8x8_header_f;
+      a_prg_vdp2_map[nbProg++]= nbg_cell_header_f;
 			if (info->colornumber >= 3) a_prg_vdp2_map[nbProg++]= nbg_cell_no_cramf;
 			else {
 				if (Vdp2Internal.ColorMode == 0) a_prg_vdp2_map[nbProg++]= nbg_cell_cram_mode_0_f;
 				else if (Vdp2Internal.ColorMode == 1) a_prg_vdp2_map[nbProg++]= nbg_cell_cram_mode_1_f;
 				else if (Vdp2Internal.ColorMode == 2) a_prg_vdp2_map[nbProg++]= nbg_cell_cram_mode_2_f;
 			}
-			a_prg_vdp2_map[nbProg++]= nbg_cell_8x8_main_f;
+			a_prg_vdp2_map[nbProg++]= nbg_cell_main_f;
       switch(info->colornumber) {
         case 0: // 4 BPP
           a_prg_vdp2_map[nbProg++]= nbg_4bpp;
@@ -211,12 +215,11 @@ static void initNBGCompute() {
 }
 
 void CSDrawNBGCell(vdp2draw_struct* info, int** cmdList) {
-
   if (ssbo_vram_ == 0) initNBGCompute();
 
   YuiMsg("Draw id %x colnum %d\n", info->idScreen, info->colornumber);
 
-  int work_groups_x = info->NbCell*8 / NBG_CS_LOCAL_SIZE_X;
+  int work_groups_x = info->NbCell;
 
   int id = createNBGCellProgram(info);
   glUseProgram(id);
@@ -237,6 +240,8 @@ void CSDrawNBGCell(vdp2draw_struct* info, int** cmdList) {
     glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 0x1000, (void*)Vdp2ColorRam);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo_cram_);
   }
+
+  // glClearTexImage(_Ygl->screen_fbotex[info->idScreen], 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
   glBindImageTexture(0, _Ygl->screen_fbotex[info->idScreen], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
 
