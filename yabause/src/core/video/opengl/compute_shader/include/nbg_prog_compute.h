@@ -47,7 +47,7 @@ static const char nbg_cell_cram_mode_1_f[] =
 "   vec4 color = vec4(0.0);\n"
 "   color.r = float((colorVal & 0x1Fu) << 3u)/255.0;\n"
 "   color.g = float(((colorVal>>5) & 0x1Fu) << 3u)/255.0;\n"
-"//We are passing the MSB CC as LSB ob blue color\n"
+"   //We are passing the MSB CC as LSB ob blue color\n"
 "   color.b = float((((colorVal>>10) & 0x1Fu) << 3u)|colorcalc)/255.0;\n"
 "   return color;\n"
 "}\n"
@@ -125,26 +125,26 @@ static const char nbg_cell_main_f[] =
 
 static const char nbg_4bpp[] =
 "//4bpp\n"
-"uint charaddr = cmd[idCmd+2]+ (idCellOffset + cellCoord.y*8u + cellCoord.x)>>1;\n"
-"uint dot = (readVdp2RamWord(charaddr) >> uint(4*(3-(texel.x&0x3u)))) & 0xFu;\n"
+"uint charaddr = cmd[idCmd+2]+ ((idCellOffset + cellCoord.y*8u + cellCoord.x)>>1);\n"
+"uint dot = (readVdp2RamWord(charaddr) >> uint(4*(3-(cellCoord.x&0x3u)))) & 0xFu;\n"
 "uint cramindex = coloroffset + ((paladdr << 4u) | (dot));\n";
 
 static const char nbg_8bpp[] =
 "//8bpp\n"
 "uint charaddr = cmd[idCmd+2]+ (idCellOffset + cellCoord.y*8u + cellCoord.x);\n"
-"uint dot = (readVdp2RamWord(charaddr) >> uint(8*(1-(texel.x&0x1u)))) & 0xFFu;\n"
+"uint dot = (readVdp2RamWord(charaddr) >> uint(8*(1-(cellCoord.x&0x1u)))) & 0xFFu;\n"
 "uint cramindex = coloroffset + ((paladdr << 4u) | (dot));\n";
 
 static const char nbg_16bpp[] =
 "//16bpp\n"
-"uint charaddr = cmd[idCmd+2]+ (idCellOffset + cellCoord.y*8u + cellCoord.x)<<1;\n"
+"uint charaddr = cmd[idCmd+2]+ ((idCellOffset + cellCoord.y*8u + cellCoord.x)<<1);\n"
 "uint dot = (readVdp2RamWord(charaddr) & 0xFFFFu;\n"
 "uint cramindex = coloroffset + dot;\n";
 
 static const char nbg_16bpp_rgb[] =
 "//16bpp_rgb\n"
 //Pas bon la
-"uint charaddr = cmd[idCmd+2]+ (idCellOffset + cellCoord.y*8u + cellCoord.x)<<1;\n"
+"uint charaddr = cmd[idCmd+2]+ ((idCellOffset + cellCoord.y*8u + cellCoord.x)<<1);\n"
 "uint dot = (readVdp2RamWord(charaddr) & 0xFFFFu;\n"
 "uint cramindex = coloroffset + dot;\n";
 
