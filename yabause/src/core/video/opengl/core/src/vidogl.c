@@ -365,6 +365,7 @@ static void DrawCellOrderCS(vdp2draw_struct * info, int x, int y) {
   cmd[5] = info->priority;
   cmd[6] = info->specialcode;
   cmd[7] = info->alpha;
+
   if (info->patternwh == 2) {
     // YuiMsg("Add Quad Cell(%dx%d) @ (%d,%d)\n",info->cellw, info->cellh, x, y);
     cmd[8] = info->cellw;

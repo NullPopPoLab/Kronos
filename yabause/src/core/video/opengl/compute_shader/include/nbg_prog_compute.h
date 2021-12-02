@@ -17,7 +17,7 @@ static const char nbg_cell_cram_mode_0_f[] =
 "   index = ((index<<1)&0xFFFu); \n"
 "   colorval = cram[index >> 2 + 0x1000u * line]; \n"
 "   if ((index & 0x02u) != 0u) { colorval >>= 16; } \n"
-"   return colorval & 0xFFFFu; \n"
+"   return (colorval & 0xFFFFu); \n"
 "}\n"
 "vec4 ReadCramColor(uint index, uint line, uint colorcalc) {\n"
 "   uint colorVal = ReadCramValue(index, line);\n"
@@ -98,7 +98,7 @@ static const char nbg_cell_header_f[] =
 "layout(std430, binding = 1) readonly buffer VDP2 { uint vram[]; };\n"
 "layout(std430, binding = 2) readonly buffer CMD { uint cmd[]; };\n"
 "uint readVdp2RamWord(uint addr) {\n"
-"   uint data = vram[ addr>>2u ];\n"
+"   uint data = vram[ (addr&0x7FFFFu)>>2u ];\n"
 "   if( (addr & 0x02u) != 0u ) { data >>= 16u; } \n"
 "   return ((((data) >> 8u) & 0xFFu) | ((data) & 0xFFu) << 8u);\n"
 "}\n";
@@ -224,32 +224,32 @@ static const char color_calculation_per_cram[] =
 "//color calculation PER CRAM\n"
 //No line support yet
 //"if (get_cram_msb(index, texel.y) == 0u)cc = 0;\n";
-"if (get_cram_msb(index, 0) == 0u)cc = 0;\n";
+"if (get_cram_msb(cramindex, 0) == 0u)cc = 0;\n";
 
 static const char nbg_normal[] =
-"outcolor.a = float(alpha & 0xF8u | priority)/255.0;\n"
-"outcolor.r = float((cc<<16u)|((cramindex>>16)& 0xFE))/255.0;\n"
+"outcolor.a = float((alpha & 0xF8u) | priority)/255.0;\n"
+"outcolor.b = float((cc<<16u)|((cramindex>>16)& 0xFE))/255.0;\n"
 "outcolor.g = float((cramindex>>8)&0xFF)/255.0;\n"
-"outcolor.b = float(cramindex & 0xFFu)/255.0;\n";
+"outcolor.r = float(cramindex & 0xFFu)/255.0;\n";
 
 static const char nbg_normal_mosaic[] =
-"outcolor.a = float(alpha & 0xF8u | priority)/255.0;\n"
-"outcolor.r = float((cc<<16u)|((cramindex>>16)& 0xFE))/255.0;\n"
+"outcolor.a = float((alpha & 0xF8u) | priority)/255.0;\n"
+"outcolor.b = float((cc<<16u)|((cramindex>>16)& 0xFE))/255.0;\n"
 "outcolor.g = float((cramindex>>8)&0xFF)/255.0;\n"
-"outcolor.b = float(cramindex & 0xFFu)/255.0;\n";
+"outcolor.r = float(cramindex & 0xFFu)/255.0;\n";
 
 static const char nbg_cram[] =
 //Do not use line yet
 //"outcolor = ReadCramColor(cramindex, texel.y);\n"
-"outcolor = ReadCramColor(cramindex, 0, cc);\n"
-"outcolor.a = float(alpha & 0xF8u | priority)/255.0;\n"
+"outcolor = ReadCramColor(cramindex & 0xFFFFu, 0, cc);\n"
+"outcolor.a = float((alpha & 0xF8u) | priority)/255.0;\n"
 "if (outcolor.a == 0u) outcolor = vec4(0.0);\n";
 
 static const char nbg_cram_mosaic[] =
 //Do not use line yet
 //"outcolor = ReadCramColor(cramindex, texel.y);\n"
-"outcolor = ReadCramColor(cramindex, 0, cc);\n"
-"outcolor.a = float(alpha & 0xF8u | priority)/255.0;\n"
+"outcolor = ReadCramColor(cramindex  & 0xFFFFu, 0, cc);\n"
+"outcolor.a = float((alpha & 0xF8u) | priority)/255.0;\n"
 "if (outcolor.a == 0u) outcolor = vec4(0.0);\n";
 
 static const char nbg_end_f[] =

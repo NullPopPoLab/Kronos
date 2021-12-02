@@ -2,7 +2,7 @@
 
 #include "nbg_prog_compute.h"
 
-#define NB_PRG_VDP2 (1<<15)
+#define NB_PRG_VDP2 (1<<17)
 
 static GLuint prg_vdp2[NB_PRG_VDP2] = {0};
 
@@ -106,6 +106,8 @@ static int getProgramId(vdp2draw_struct *info) {
     if (info->mosaicxmask != 1 || info->mosaicymask != 1) id += 2 << rank; //PG_VDP2_MOSAIC_CRAM
     else id += 3 << rank; // PG_VDP2_NORMAL_CRAM
   }
+  rank += 2;
+  id |= (info->idScreen - NBG0) << rank;
   rank += 2;
   return id;
 }

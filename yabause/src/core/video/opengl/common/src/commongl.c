@@ -875,6 +875,7 @@ void YglGenerate() {
   int status;
   GLuint error;
   float col[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+  GLenum DrawBuffers[2]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1};
 
   warning = 0;
   YglDestroy();
@@ -936,6 +937,7 @@ void YglGenerate() {
   if (status != GL_FRAMEBUFFER_COMPLETE) {
     abort();
   }
+  glDrawBuffers(2, &DrawBuffers[0]);
   glClearBufferfv(GL_COLOR, 0, col);
   glClearBufferfv(GL_COLOR, 1, col);
   glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
