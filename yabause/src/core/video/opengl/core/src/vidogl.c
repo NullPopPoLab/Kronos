@@ -42,7 +42,7 @@
 #define Y_MAX(a, b) ((a) > (b) ? (a) : (b))
 #define Y_MIN(a, b) ((a) < (b) ? (a) : (b))
 
-#define YAB_VDP2_STATS
+// #define YAB_VDP2_STATS
 
 #define VDP2_CELL_THREAD_NB 4
 
@@ -1992,7 +1992,7 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
   tile.cob = info->cob;
 
   if ((VIDCore->id == VIDCORE_CS) && (isNBGScreen(info->idScreen)==1)) {
-    DrawCellOrderCS(info, x*info->coordincx, y*info->coordincy);
+    DrawCellOrderCS(info, x, y);
     return;
   }
 

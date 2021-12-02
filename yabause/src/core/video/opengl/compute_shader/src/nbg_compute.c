@@ -217,13 +217,13 @@ static void initNBGCompute() {
 void CSDrawNBGCell(vdp2draw_struct* info, int** cmdList) {
   if (ssbo_vram_ == 0) initNBGCompute();
 
-  YuiMsg("Draw id %x colnum %d\n", info->idScreen, info->colornumber);
+  // YuiMsg("Draw id %x colnum %d\n", info->idScreen, info->colornumber);
 
   int work_groups_x = info->NbCell;
 
   int id = createNBGCellProgram(info);
   glUseProgram(id);
-  YuiMsg("Use Program %d for nbCmd = %d\n", id, info->NbCell);
+  // YuiMsg("Use Program %d for nbCmd = %d\n", id, info->NbCell);
 
   //Vdp2Ram
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vram_);
@@ -242,6 +242,13 @@ void CSDrawNBGCell(vdp2draw_struct* info, int** cmdList) {
   }
 
   // glClearTexImage(_Ygl->screen_fbotex[info->idScreen], 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  int w, h;
+  glBindTexture(GL_TEXTURE_2D,_Ygl->screen_fbotex[info->idScreen]);
+  glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
+  glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
+  if ((w != _Ygl->rwidth/info->coordincx) || (h != _Ygl->rheight/info->coordincy))
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->rwidth/info->coordincx, _Ygl->rheight/info->coordincy, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  glBindTexture(GL_TEXTURE_2D, 0);
 
   glBindImageTexture(0, _Ygl->screen_fbotex[info->idScreen], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
 

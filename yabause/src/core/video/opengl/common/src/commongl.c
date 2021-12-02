@@ -3097,6 +3097,18 @@ GLuint getVDP1fb(int id) {
   return _Ygl->vdp1FrameBuff[_Ygl->readframe*2 + id];
 }
 
+static int isNBG(int id) {
+  switch(id) {
+    case NBG0:
+    case NBG1:
+    case NBG2:
+    case NBG3:
+        return 1;
+    default:
+        return 0;
+  }
+}
+
 void YglRender(Vdp2 *varVdp2Regs) {
    GLuint cprg=0;
    GLuint srcTexture;
@@ -3234,12 +3246,19 @@ void YglRender(Vdp2 *varVdp2Regs) {
       else
         glDrawBuffers(1, &DrawBuffers[1]);
     } else {
+      int w, h;
       glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
       glScissor(0, 0, _Ygl->rwidth, _Ygl->rheight);
+      glBindTexture(GL_TEXTURE_2D,_Ygl->screen_fbotex[i]);
+      glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
+      glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
+      if ((w != _Ygl->rwidth) || (h != _Ygl->rheight))
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->rwidth, _Ygl->rheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+      glBindTexture(GL_TEXTURE_2D, 0);
       glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->screen_fbo);
       glDrawBuffers(1, &DrawBuffers[i]);
     }
-    if ( i != NBG0)
+    if ( isNBG(i) == 0)
       drawScreen[i] = DrawVDP2Screen(varVdp2Regs, i);
     else
       drawScreen[i] = 1;
