@@ -236,7 +236,6 @@ void CSDrawNBGCell(vdp2draw_struct* info) {
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo_cram_);
   }
 
-  // glClearTexImage(_Ygl->screen_fbotex[info->idScreen], 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
   int w, h;
   glBindTexture(GL_TEXTURE_2D,_Ygl->screen_fbotex[info->idScreen]);
   glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
@@ -244,6 +243,8 @@ void CSDrawNBGCell(vdp2draw_struct* info) {
   if ((w != _Ygl->rwidth/info->coordincx) || (h != _Ygl->rheight/info->coordincy))
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->rwidth/info->coordincx, _Ygl->rheight/info->coordincy, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
   glBindTexture(GL_TEXTURE_2D, 0);
+
+  glClearTexImage(_Ygl->screen_fbotex[info->idScreen], 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
   glBindImageTexture(0, _Ygl->screen_fbotex[info->idScreen], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
 

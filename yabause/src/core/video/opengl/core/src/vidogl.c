@@ -356,8 +356,7 @@ static void requestDrawCellOrderCPU(vdp2draw_struct * info, YglTexture *texture,
 int NBGCmdList[0x8][0x4000][10];
 
 static void DrawCellOrderCS(vdp2draw_struct * info, int x, int y) {
-  int id = info->specialcolormode | ((info->specialcolorfunction == 0)<<2);
-  YuiMsg("ID = %d (%d)\n", id, info->idScreen);
+  int id = info->specialcolormode | ((info->specialcolorfunction & 0x1)<<2);
   int *cmd = NBGCmdList[id][info->NbCell[id]++];
   cmd[0] = x;
   cmd[1] = y;
