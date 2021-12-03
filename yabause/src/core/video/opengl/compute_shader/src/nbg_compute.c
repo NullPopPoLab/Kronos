@@ -45,9 +45,11 @@ static GLuint createProgram(int count, const GLchar** prg_strs) {
   return program;
 }
 
-static int getProgramId(vdp2draw_struct *info) {
+static int getProgramId(vdp2draw_struct *info, int colorId) {
   int id = 0;
   int rank = 0;
+  int colormode = colorId & 0x3;
+  int colorfunc = (colorId >> 2) & 0x1;
 	//Cram accesses
   if (info->patternwh == 2) id |= 1 << rank;
   rank += 1;
@@ -83,13 +85,13 @@ static int getProgramId(vdp2draw_struct *info) {
   }
   rank += 4;
   //Color calculation
-  switch (info->specialcolormode)
+  switch (colormode)
   {
     case 1:
-      if (info->specialcolorfunction == 0) id += 1 << rank;
+      if (colorfunc == 0) id += 1 << rank;
       break;
     case 2:
-      if (info->specialcolorfunction == 0) id += 1 << rank;
+      if (colorfunc == 0) id += 1 << rank;
       else id += 2 << rank;;
       break;
    case 3:
@@ -112,11 +114,13 @@ static int getProgramId(vdp2draw_struct *info) {
   return id;
 }
 
-static GLuint createNBGCellProgram(vdp2draw_struct *info) {
+static GLuint createNBGCellProgram(vdp2draw_struct *info, int colorId) {
 	const GLchar * a_prg_vdp2_map[11];
 	int nbProg = 0;
-	int progId = getProgramId(info);
+	int progId = getProgramId(info, colorId);
 	if (prg_vdp2[progId] == 0) {
+      int colormode = colorId & 0x3;
+      int colorfunc = (colorId >> 2) & 0x1;
 		  //CRAM access
       if (info->patternwh == 2) a_prg_vdp2_map[nbProg++]= nbg_cell_16x16_header_f;
 			else a_prg_vdp2_map[nbProg++]= nbg_cell_8x8_header_f;
@@ -166,14 +170,15 @@ static GLuint createNBGCellProgram(vdp2draw_struct *info) {
 			} else a_prg_vdp2_map[nbProg++]= nbg_no_special_priority;
 
 			//Color calculation
-			switch (info->specialcolormode)
+      YuiMsg("%d %d %d\n", info->idScreen, colormode, colorfunc );
+			switch (colormode)
 		  {
 			  case 1:
-			    if (info->specialcolorfunction == 0) a_prg_vdp2_map[nbProg++]= no_color_calculation;
+			    if (colorfunc == 0) a_prg_vdp2_map[nbProg++]= no_color_calculation;
 					else a_prg_vdp2_map[nbProg++]= do_color_calculation;
 			    break;
 			  case 2:
-			    if (info->specialcolorfunction == 0) a_prg_vdp2_map[nbProg++]= no_color_calculation;
+			    if (colorfunc== 0) a_prg_vdp2_map[nbProg++]= no_color_calculation;
 			    else a_prg_vdp2_map[nbProg++]= color_calculation_per_dot;
 			    break;
 			 case 3:
@@ -216,25 +221,13 @@ static void initNBGCompute() {
 
 }
 
-void CSDrawNBGCell(vdp2draw_struct* info, int** cmdList) {
+void CSDrawNBGCell(vdp2draw_struct* info) {
   if (ssbo_vram_ == 0) initNBGCompute();
-
-  // YuiMsg("Draw id %x colnum %d\n", info->idScreen, info->colornumber);
-
-  int work_groups_x = info->NbCell;
-
-  int id = createNBGCellProgram(info);
-  glUseProgram(id);
-  // YuiMsg("Use Program %d for nbCmd = %d\n", id, info->NbCell);
 
   //Vdp2Ram
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vram_);
   glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 0x100000, (void*)Vdp2Ram);
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_vram_);
-
-  glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cmd_);
-  glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, info->NbCell*10*sizeof(int), (void*)cmdList);
-  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo_cmd_);
 
   if (info->colornumber < 3) {
     //Color Ram
@@ -254,8 +247,15 @@ void CSDrawNBGCell(vdp2draw_struct* info, int** cmdList) {
 
   glBindImageTexture(0, _Ygl->screen_fbotex[info->idScreen], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
 
-  glDispatchCompute(work_groups_x, 1, 1);
-
-	//Faire le rendu complet avec Texture de sortie, VRAM, CRAM, et param (x:charaddr, y coloroffset, z: paladdr, w: priority)
-//Quid de info?
+  for (int colorId = 0 ; colorId<0x8; colorId++) {
+      if (info->NbCell[colorId] != 0) {
+        int id = createNBGCellProgram(info, colorId);
+        glUseProgram(id);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cmd_);
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, info->NbCell[colorId]*10*sizeof(int), (void*)NBGCmdList[colorId]);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo_cmd_);
+        glDispatchCompute(info->NbCell[colorId], 1, 1);
+        info->NbCell[colorId] = 0;
+      }
+  }
 }

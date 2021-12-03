@@ -353,10 +353,12 @@ static void requestDrawCellOrderCPU(vdp2draw_struct * info, YglTexture *texture,
   }
 }
 
-int NBGCmdList[0x4000][10];
+int NBGCmdList[0x8][0x4000][10];
 
 static void DrawCellOrderCS(vdp2draw_struct * info, int x, int y) {
-  int *cmd = NBGCmdList[info->NbCell++];
+  int id = info->specialcolormode | ((info->specialcolorfunction == 0)<<2);
+  YuiMsg("ID = %d (%d)\n", id, info->idScreen);
+  int *cmd = NBGCmdList[id][info->NbCell[id]++];
   cmd[0] = x;
   cmd[1] = y;
   cmd[2] = info->charaddr;
@@ -6121,33 +6123,17 @@ LOG_ASYN("===================================\n");
 START_STATS
   Vdp2DrawRBG0(&Vdp2Lines[VDP2_DRAW_LINE]);
 PRINT_STAT("RGB0")
-  infoNBG3.NbCell = 0;
   Vdp2DrawNBG3(&Vdp2Lines[VDP2_DRAW_LINE]);
-  if (infoNBG3.NbCell != 0) {
-    CSDrawNBGCell(&infoNBG3, NBGCmdList);
-    infoNBG3.NbCell = 0;
-  }
+    CSDrawNBGCell(&infoNBG3);
 PRINT_STAT("NBG3")
-  infoNBG2.NbCell = 0;
-  Vdp2DrawNBG2(&Vdp2Lines[VDP2_DRAW_LINE]);
-  if (infoNBG2.NbCell != 0) {
-    CSDrawNBGCell(&infoNBG2, NBGCmdList);
-    infoNBG2.NbCell = 0;
-  }
+    Vdp2DrawNBG2(&Vdp2Lines[VDP2_DRAW_LINE]);
+    CSDrawNBGCell(&infoNBG2);
 PRINT_STAT("NBG2")
-  infoNBG1.NbCell = 0;
   Vdp2DrawNBG1(&Vdp2Lines[VDP2_DRAW_LINE]);
-  if (infoNBG1.NbCell != 0) {
-    CSDrawNBGCell(&infoNBG1, NBGCmdList);
-    infoNBG1.NbCell = 0;
-  }
+    CSDrawNBGCell(&infoNBG1);
 PRINT_STAT("NBG1")
-  infoNBG0.NbCell = 0;
   Vdp2DrawNBG0(&Vdp2Lines[VDP2_DRAW_LINE]);
-  if (infoNBG0.NbCell != 0) {
-    CSDrawNBGCell(&infoNBG0, NBGCmdList);
-    infoNBG0.NbCell = 0;
-  }
+    CSDrawNBGCell(&infoNBG0);
 PRINT_STAT("NBG0")
   Vdp2DrawRBG1(&Vdp2Lines[VDP2_DRAW_LINE]);
 PRINT_STAT("RBG1")

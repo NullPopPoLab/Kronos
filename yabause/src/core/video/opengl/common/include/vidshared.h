@@ -195,7 +195,7 @@ typedef struct
    u16 char_bank[4];
    u16 pname_bank[4];
 
-   int NbCell;
+   int NbCell[0x8];
 
 } vdp2draw_struct;
 
