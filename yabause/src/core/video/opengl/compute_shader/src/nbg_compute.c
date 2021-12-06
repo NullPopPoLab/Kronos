@@ -370,20 +370,14 @@ void DrawSmallCellCS(vdp2draw_struct * info, int x, int y, int* cmd) {
 void DrawCellOrderCS(vdp2draw_struct * info, int x, int y) {
   int id = info->specialcolormode | ((info->specialcolorfunction & 0x1)<<2);
   int *cmd = NBGCmdList[id][info->NbCell[id]++];
-  if (info->patternwh == 2) {
-    if ((info->cellh == 16) && (info->cellw == 16)) {
-      //Quad cell 16x16
-      DrawSmallCellCS(info, x, y, cmd);
-      return;
-    }
-  } else {
-    if ((info->cellh == 8) && (info->cellw == 8)) {
-      //Single cell 8x8
-      DrawSmallCellCS(info, x, y, cmd);
-      return;
-    }
+  if (((info->cellh == 16) && (info->cellw == 16))||
+      ((info->cellh == 8) && (info->cellw == 8))) {
+    //Quad cell 16x16
+    DrawSmallCellCS(info, x, y, cmd);
+    return;
   }
   //We have a big Cell!!!
+  YuiMsg("Big cell %d (%d %d)!\n", info->idScreen, info->cellh, info->cellw);
   int charaddr;
   for (int ystep = 0; ystep < info->cellh; ystep+=8) {
     for (int xstep = 0; xstep < info->cellw; xstep+=8) {

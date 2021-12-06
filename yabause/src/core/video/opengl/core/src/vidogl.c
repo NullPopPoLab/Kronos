@@ -1970,7 +1970,6 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
   tile.cob = info->cob;
 
   if ((VIDCore->id == VIDCORE_CS) && (isNBGScreen(info->idScreen)==1)) {
-    YuiMsg("%d %d %d\n", __LINE__, info->cellw, info->cellh);
     DrawCellOrderCS(info, x, y);
     return;
   }
