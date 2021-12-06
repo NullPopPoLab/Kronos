@@ -354,9 +354,7 @@ static GLuint createNBGBitmapScrollProgram(vdp2draw_struct *info) {
 
 int NBGCmdList[0x8][0x4000][10];
 
-void DrawCellOrderCS(vdp2draw_struct * info, int x, int y) {
-  int id = info->specialcolormode | ((info->specialcolorfunction & 0x1)<<2);
-  int *cmd = NBGCmdList[id][info->NbCell[id]++];
+void DrawSmallCellCS(vdp2draw_struct * info, int x, int y, int* cmd) {
   cmd[0] = x;
   cmd[1] = y;
   cmd[2] = info->charaddr;
@@ -365,15 +363,61 @@ void DrawCellOrderCS(vdp2draw_struct * info, int x, int y) {
   cmd[5] = info->priority;
   cmd[6] = info->specialcode;
   cmd[7] = info->alpha;
+  cmd[8] = 8;
+  cmd[9] = 8;
+}
 
+void DrawCellOrderCS(vdp2draw_struct * info, int x, int y) {
+  int id = info->specialcolormode | ((info->specialcolorfunction & 0x1)<<2);
+  int *cmd = NBGCmdList[id][info->NbCell[id]++];
   if (info->patternwh == 2) {
-    // YuiMsg("Add Quad Cell(%dx%d) @ (%d,%d)\n",info->cellw, info->cellh, x, y);
-    cmd[8] = info->cellw;
-    cmd[9] = info->cellh;
+    if ((info->cellh == 16) && (info->cellw == 16)) {
+      //Quad cell 16x16
+      DrawSmallCellCS(info, x, y, cmd);
+      return;
+    }
   } else {
-    // YuiMsg("Add Single Cell(%dx%d) @ (%d,%d)\n",info->cellw, info->cellh, x, y);
-    cmd[8] = info->cellw;
-    cmd[9] = info->cellh;
+    if ((info->cellh == 8) && (info->cellw == 8)) {
+      //Single cell 8x8
+      DrawSmallCellCS(info, x, y, cmd);
+      return;
+    }
+  }
+  //We have a big Cell!!!
+  int charaddr;
+  for (int ystep = 0; ystep < info->cellh; ystep+=8) {
+    for (int xstep = 0; xstep < info->cellw; xstep+=8) {
+      switch (info->colornumber)
+      {
+      case 0: // 4 BPP
+        charaddr = info->charaddr + ystep*(info->cellw/4)*2 + (xstep/4)*2;
+        break;
+      case 1: // 8 BPP
+        charaddr = info->charaddr + ystep*(info->cellw/2)*2 + (xstep/2)*2;
+        break;
+      case 2: // 16 BPP(palette)
+      case 3: // 16 BPP(RGB)
+        charaddr = info->charaddr + ystep*(info->cellw)*2 + (xstep)*2;
+        break;
+      case 4: // 32 BPP
+        charaddr = info->charaddr + ystep*(info->cellw)*4 + (xstep)*4;
+        break;
+      default:
+        charaddr = info->charaddr;
+        break;
+      }
+      cmd[0] = x+xstep;
+      cmd[1] = y+ystep;
+      cmd[2] = charaddr;
+      cmd[3] = info->coloroffset;
+      cmd[4] = info->paladdr;
+      cmd[5] = info->priority;
+      cmd[6] = info->specialcode;
+      cmd[7] = info->alpha;
+      cmd[8] = info->cellw;
+      cmd[9] = info->cellh;
+      cmd = NBGCmdList[id][info->NbCell[id]++];
+    }
   }
 }
 

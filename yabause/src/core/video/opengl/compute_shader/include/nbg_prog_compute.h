@@ -130,33 +130,33 @@ static const char nbg_cell_main_f[] =
 
 static const char nbg_4bpp[] =
 "//4bpp\n"
-"uint charaddr = cmd[idCmd+2]+ ((idCellOffset + cellCoord.y*8u + cellCoord.x)>>1);\n"
+"uint charaddr = cmd[idCmd+2]+ ((idCellOffset + cellCoord.y*cellw + cellCoord.x)>>1);\n"
 "uint dot = (readVdp2RamWord(charaddr) >> uint(4*(3-(cellCoord.x&0x3u)))) & 0xFu;\n"
 "uint cramindex = coloroffset + ((paladdr << 4u) | (dot));\n";
 
 static const char nbg_8bpp[] =
 "//8bpp\n"
-"uint charaddr = cmd[idCmd+2]+ (idCellOffset + cellCoord.y*8u + cellCoord.x);\n"
+"uint charaddr = cmd[idCmd+2]+ (idCellOffset + cellCoord.y*cellw + cellCoord.x);\n"
 "uint dot = (readVdp2RamWord(charaddr) >> uint(8*(1-(cellCoord.x&0x1u)))) & 0xFFu;\n"
 "uint cramindex = coloroffset + ((paladdr << 4u) | (dot));\n";
 
 static const char nbg_16bpp[] =
 "//16bpp\n"
-"uint charaddr = cmd[idCmd+2]+ ((idCellOffset + cellCoord.y*8u + cellCoord.x)<<1);\n"
+"uint charaddr = cmd[idCmd+2]+ ((idCellOffset + cellCoord.y*cellw + cellCoord.x)<<1);\n"
 "uint dot = (readVdp2RamWord(charaddr) & 0xFFFFu;\n"
 "uint cramindex = coloroffset + dot;\n";
 
 static const char nbg_16bpp_rgb[] =
 "//16bpp_rgb\n"
 //Pas bon la
-"uint charaddr = cmd[idCmd+2]+ ((idCellOffset + cellCoord.y*8u + cellCoord.x)<<1);\n"
-"uint dot = (readVdp2RamWord(charaddr) & 0xFFFFu;\n"
-"uint cramindex = coloroffset + dot;\n";
+"uint charaddr = cmd[idCmd+2]+ ((idCellOffset + cellCoord.y*cellw + cellCoord.x)<<1);\n"
+"uint cramindex555 = (readVdp2RamWord(charaddr) & 0xFFFFu);\n"
+"uint dot = cramindex555 & 0x8000;\n"
+"uint cramindex = ((cramindex555 & 0x7C00)<< 9u)|((cramindex555 & 0x3E0)<< 6u)|((cramindex555 & 0x1F)<< 3u);\n";
 
 static const char nbg_32bpp[] =
 "//32bpp\n"
-//Pas bon la
-"uint charaddr = cmd[idCmd+2]+ (idCellOffset + cellCoord.y*8u + cellCoord.x)<<2;\n"
+"uint charaddr = cmd[idCmd+2]+ (idCellOffset + cellCoord.y*cellw + cellCoord.x)<<2;\n"
 "uint dot1 = readVdp2RamWord(charaddr);\n"
 "uint dot2 = readVdp2RamWord(charaddr+2);\n"
 "uint cramindex = ((dot1 & 0xFFu)<< 16) | (dot2 & 0xFFFFu);\n"
@@ -317,8 +317,9 @@ static const char nbg_bmp_16bpp_rgb[] =
 "uint offsety = ((s.x +s.y*cellw)<<1);\n"
 "uint offsetx = (2*(texel.x));\n"
 "uint charaddr = cmd[2]+ offsety + offsetx;\n"
-"uint cramindex = (readVdp2RamWord(charaddr) & 0xFFFFu);\n"
-"uint dot = cramindex & 0x8000;\n";
+"uint cramindex555 = (readVdp2RamWord(charaddr) & 0xFFFFu);\n"
+"uint dot = cramindex555 & 0x8000;\n"
+"uint cramindex = ((cramindex555 & 0x7C00)<< 9u)|((cramindex555 & 0x3E0)<< 6u)|((cramindex555 & 0x1F)<< 3u);\n";
 
 static const char nbg_bmp_32bpp[] =
 "//32bpp\n"
