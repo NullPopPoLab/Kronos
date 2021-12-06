@@ -9,7 +9,7 @@
 #define QuoteIdent(ident) #ident
 #define Stringify(macro) QuoteIdent(macro)
 
-static const char nbg_cell_cram_mode_0_f[] =
+static const char nbg_cram_mode_0_f[] =
 "layout(std430, binding = 3) readonly buffer VDP2C { uint cram[]; };\n"
 "//CRAM Mode 0\n"
 "uint ReadCramValue(uint index, uint line) {\n"
@@ -32,7 +32,7 @@ static const char nbg_cell_cram_mode_0_f[] =
 "   return (ReadCramValue(index, line) & 0x8000u); \n"
 "}\n";
 
-static const char nbg_cell_cram_mode_1_f[] =
+static const char nbg_cram_mode_1_f[] =
 "layout(std430, binding = 3) readonly buffer VDP2C { uint cram[]; };\n"
 "//CRAM Mode 1\n"
 "uint ReadCramValue(uint index, uint line) {\n"
@@ -55,7 +55,7 @@ static const char nbg_cell_cram_mode_1_f[] =
 "   return (ReadCramValue(index, line) & 0x8000u); \n"
 "}\n";
 
-static const char nbg_cell_cram_mode_2_f[] =
+static const char nbg_cram_mode_2_f[] =
 "layout(std430, binding = 3) readonly buffer VDP2C { uint cram[]; };\n"
 "//CRAM Mode 2\n"
 "uint ReadCramValue(uint index, uint line) {\n"
@@ -76,27 +76,31 @@ static const char nbg_cell_cram_mode_2_f[] =
 "   return ((ReadCramValue(index, line)>>16) & 0x8000u); \n"
 "}\n";
 
-static const char nbg_cell_no_cramf[] =
-"{//NO CRAM}\n";
+static const char nbg_no_cramf[] =
+"//NO CRAM\n";
 
-static const char nbg_cell_8x8_header_f[] =
+static const char nbg_8x8_header_f[] =
 SHADER_VERSION_COMPUTE
 "#ifdef GL_ES\n"
 "precision highp float;\n"
 "#endif\n"
 "layout(local_size_x = 8, local_size_y = 8) in;\n";
 
-static const char nbg_cell_16x16_header_f[] =
+static const char nbg_16x16_header_f[] =
 SHADER_VERSION_COMPUTE
 "#ifdef GL_ES\n"
 "precision highp float;\n"
 "#endif\n"
 "layout(local_size_x = 16, local_size_y = 16) in;\n";
 
-static const char nbg_cell_header_f[] =
+static const char nbg_header_f[] =
 "layout(rgba8, binding = 0) writeonly uniform image2D outSurface;\n"
 "layout(std430, binding = 1) readonly buffer VDP2 { uint vram[]; };\n"
 "layout(std430, binding = 2) readonly buffer CMD { uint cmd[]; };\n"
+"uint readVdp2RamLong(uint addr) {\n"
+"   uint data = vram[ (addr&0x7FFFFu)>>2u ];\n"
+"   return data;\n"
+"}\n"
 "uint readVdp2RamWord(uint addr) {\n"
 "   uint data = vram[ (addr&0x7FFFFu)>>2u ];\n"
 "   if( (addr & 0x02u) != 0u ) { data >>= 16u; } \n"
@@ -122,6 +126,7 @@ static const char nbg_cell_main_f[] =
 "uint alpha = cmd[idCmd+7];\n"
 "ivec2 cellCoord = ivec2(mod(gl_LocalInvocationID.xy, 8));\n"
 "uint idCellOffset  = ((uint(gl_LocalInvocationID.y)/8u)*2u + (uint(gl_LocalInvocationID.x)/8u)) * 64u;\n";
+
 
 static const char nbg_4bpp[] =
 "//4bpp\n"
@@ -228,13 +233,13 @@ static const char color_calculation_per_cram[] =
 
 static const char nbg_normal[] =
 "outcolor.a = float((alpha & 0xF8u) | priority)/255.0;\n"
-"outcolor.b = float((cc<<16u)|((cramindex>>16)& 0xFE))/255.0;\n"
+"outcolor.b = float(cc|((cramindex>>16)& 0xFEu))/255.0;\n"
 "outcolor.g = float((cramindex>>8)&0xFF)/255.0;\n"
 "outcolor.r = float(cramindex & 0xFFu)/255.0;\n";
 
 static const char nbg_normal_mosaic[] =
 "outcolor.a = float((alpha & 0xF8u) | priority)/255.0;\n"
-"outcolor.b = float((cc<<16u)|((cramindex>>16)& 0xFE))/255.0;\n"
+"outcolor.b = float(cc|((cramindex>>16)& 0xFEu))/255.0;\n"
 "outcolor.g = float((cramindex>>8)&0xFF)/255.0;\n"
 "outcolor.r = float(cramindex & 0xFFu)/255.0;\n";
 
@@ -256,7 +261,73 @@ static const char nbg_end_f[] =
 //"Color = (Color&0xFEFFFFu) | (cc << 16) | ((0xF8u | priority)<<24);\n";
 "imageStore(outSurface,texel,outcolor);\n"
 "}\n";
+static const char nbg_bmp_main_f[] =
+"layout(std430, binding = 4) readonly buffer LINE { uint line[]; };\n"
+"void main()\n"
+"{\n"
+"ivec2 size = imageSize(outSurface);\n"
+"ivec2 texel = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);\n"
+"vec4 outcolor = vec4(0.0);\n"
+"uint cellw = cmd[8];\n"
+"uint cellh = cmd[9];\n"
+"if (texel.x >= size.x || texel.y >= size.y ) return;\n"
+"if (texel.x < 0 || texel.y < 0 ) return;\n"
+"uint coloroffset = cmd[3];\n"
+"uint paladdr = cmd[4];\n"
+"uint priority = cmd[5];\n"
+"uint cc = 1u;\n"
+"uint specialcode = cmd[6];\n"
+"uint alpha = cmd[7];\n"
+"ivec2 s = ivec2(int(cmd[0]), int(cmd[1]));\n";
 
+static const char nbg_linescroll[] =
+"s.x = s.x + int(line[(size.y-texel.y)*cmd[10]*3+0]);\n"
+"s.y = s.y + int(line[(size.y-texel.y)*cmd[10]*3+1]);\n"
+"s &= (ivec2(cellw, cellh) - ivec2(1));\n"
+"if ((line[(size.y-texel.y)*cmd[10]*3+0] >= 0) && (line[(size.y-texel.y)*cmd[10]*3+1] < s.y)) s.x -= 1;\n";
+
+static const char nbg_bmp_4bpp[] =
+"//4bpp\n"
+"uint offsety = ((s.x +s.y*cellw)>>2)<<1;\n"
+"uint offsetx = (2*(texel.x<<2));\n"
+"uint charaddr = cmd[2]+ offsety + offsetx;\n"
+"uint dot = (readVdp2RamWord(charaddr) >> uint(4*(3-(cellCoord.x&0x3u)))) & 0xFu;\n"
+"uint cramindex = coloroffset + ((paladdr << 4u) | (dot));\n";
+
+static const char nbg_bmp_8bpp[] =
+"//8bpp\n"
+"uint offsety = ((s.x +s.y*cellw));\n"
+"uint offsetx = (2*(texel.x<<1));\n"
+"uint charaddr = cmd[2]+ offsety + offsetx;\n"
+"uint dot = (readVdp2RamWord(charaddr) >> uint(8*(1-(cellCoord.x&0x1u)))) & 0xFFu;\n"
+"uint cramindex = coloroffset + ((paladdr << 4u) | (dot));\n";
+
+static const char nbg_bmp_16bpp[] =
+"//16bpp\n"
+"uint offsety = ((s.x +s.y*cellw)<<1);\n"
+"uint offsetx = (2*(texel.x));\n"
+"uint charaddr = cmd[2]+ offsety + offsetx;\n"
+"uint dot = (readVdp2RamWord(charaddr) & 0xFFFFu;)\n"
+"uint cramindex = coloroffset + dot;\n"
+"uint dot = cramindex & 0x8000;\n";
+
+static const char nbg_bmp_16bpp_rgb[] =
+"//16bpp_rgb\n"
+"uint offsety = ((s.x +s.y*cellw)<<1);\n"
+"uint offsetx = (2*(texel.x));\n"
+"uint charaddr = cmd[2]+ offsety + offsetx;\n"
+"uint cramindex = (readVdp2RamWord(charaddr) & 0xFFFFu);\n"
+"uint dot = cramindex & 0x8000;\n";
+
+static const char nbg_bmp_32bpp[] =
+"//32bpp\n"
+"uint offsety = ((s.x +s.y*cellw)<<2);\n"
+"uint offsetx = (4*(texel.x));\n"
+"uint charaddr = cmd[2]+ offsety + offsetx;\n"
+"uint dot1 = readVdp2RamWord(charaddr);\n"
+"uint dot2 = readVdp2RamWord(charaddr+2);\n"
+"uint cramindex = ((dot1 & 0xFFu)<< 16) | (dot2 & 0xFFFFu);\n"
+"uint dot = dot1 & 0x8000;\n";
 
 
 #endif //NBG_PROG_COMPUTE_H

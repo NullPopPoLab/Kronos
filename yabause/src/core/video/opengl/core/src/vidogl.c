@@ -353,30 +353,6 @@ static void requestDrawCellOrderCPU(vdp2draw_struct * info, YglTexture *texture,
   }
 }
 
-int NBGCmdList[0x8][0x4000][10];
-
-static void DrawCellOrderCS(vdp2draw_struct * info, int x, int y) {
-  int id = info->specialcolormode | ((info->specialcolorfunction & 0x1)<<2);
-  int *cmd = NBGCmdList[id][info->NbCell[id]++];
-  cmd[0] = x;
-  cmd[1] = y;
-  cmd[2] = info->charaddr;
-  cmd[3] = info->coloroffset;
-  cmd[4] = info->paladdr;
-  cmd[5] = info->priority;
-  cmd[6] = info->specialcode;
-  cmd[7] = info->alpha;
-
-  if (info->patternwh == 2) {
-    // YuiMsg("Add Quad Cell(%dx%d) @ (%d,%d)\n",info->cellw, info->cellh, x, y);
-    cmd[8] = info->cellw;
-    cmd[9] = info->cellh;
-  } else {
-    // YuiMsg("Add Single Cell(%dx%d) @ (%d,%d)\n",info->cellw, info->cellh, x, y);
-    cmd[8] = info->cellw;
-    cmd[9] = info->cellh;
-  }
-}
 #endif
 
 #define IS_MESH(a) ((a&0x100) == 0x100)
@@ -5186,19 +5162,25 @@ YuiMsg("%d\n", __LINE__);
           info->sv = (varVdp2Regs->SCYIN0 & 0x7FF);
           info->x = 0;
           info->y = 0;
-          info->vertices[0] = 0;
-          info->vertices[1] = 0;
-          info->vertices[2] = _Ygl->rwidth;
-          info->vertices[3] = 0;
-          info->vertices[4] = _Ygl->rwidth;
-          info->vertices[5] = _Ygl->rheight;
-          info->vertices[6] = 0;
-          info->vertices[7] = _Ygl->rheight;
-          vdp2draw_struct infotmp = *info;
-          infotmp.cellw = _Ygl->rwidth;
-          infotmp.cellh = _Ygl->rheight << vdp2_interlace;
-          YglQuad(&infotmp, &texture, &tmpc, YglTM_vdp2);
-          Vdp2DrawBitmapLineScroll(info, &texture, _Ygl->rwidth, _Ygl->rheight, varVdp2Regs);
+          if (VIDCore != NULL && VIDCore->id == VIDCORE_OGL) {
+            info->vertices[0] = 0;
+            info->vertices[1] = 0;
+            info->vertices[2] = _Ygl->rwidth;
+            info->vertices[3] = 0;
+            info->vertices[4] = _Ygl->rwidth;
+            info->vertices[5] = _Ygl->rheight;
+            info->vertices[6] = 0;
+            info->vertices[7] = _Ygl->rheight;
+            vdp2draw_struct infotmp = *info;
+            infotmp.cellw = _Ygl->rwidth;
+            infotmp.cellh = _Ygl->rheight << vdp2_interlace;
+            YglQuad(&infotmp, &texture, &tmpc, YglTM_vdp2);
+            Vdp2DrawBitmapLineScroll(info, &texture, _Ygl->rwidth, _Ygl->rheight, varVdp2Regs);
+          } else {
+            // A voir
+            YuiMsg("%d %d\n", info->cellw, info->cellh);
+            CSDrawNBGBitmapScroll(info);
+          }
         }
         else {
           YuiMsg("%d\n", __LINE__);

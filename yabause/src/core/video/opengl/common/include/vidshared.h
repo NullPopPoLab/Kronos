@@ -34,8 +34,8 @@ extern "C" {
 
 typedef struct
 {
-   short LineScrollValH;
-   short LineScrollValV;
+   int LineScrollValH;
+   int LineScrollValV;
    int CoordinateIncH;
 } vdp2Lineinfo;
 
