@@ -449,7 +449,7 @@ void CSDrawNBGCell(vdp2draw_struct* info) {
   }
 }
 
-void CSDrawNBGBitmapScroll(vdp2draw_struct* info) {
+void CSDrawNBGBitmapScroll(vdp2draw_struct* info, int width, int height) {
   if (ssbo_vram_ == 0) initNBGCompute();
 
   int cmd[11];
@@ -466,7 +466,6 @@ void CSDrawNBGBitmapScroll(vdp2draw_struct* info) {
   cmd[8] = info->cellw;
   cmd[9] = info->cellh;
   cmd[10] = info->lineinc;
-  YuiMsg("LINEINC = %d %d %d\n",info->lineinc, info->cellw, info->cellh);
   //Lineinfo est un buffer que pour nbg1 et nbg2.
 
   int workgroup_x = (_Ygl->rwidth+4)/8;
@@ -493,8 +492,8 @@ void CSDrawNBGBitmapScroll(vdp2draw_struct* info) {
   glBindTexture(GL_TEXTURE_2D,_Ygl->screen_fbotex[info->idScreen]);
   glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
   glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
-  if ((w != _Ygl->rwidth/info->coordincx) || (h != _Ygl->rheight/info->coordincy))
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->rwidth/info->coordincx, _Ygl->rheight/info->coordincy, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  if ((w != width) || (h != height))
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
   glBindTexture(GL_TEXTURE_2D, 0);
 
   glClearTexImage(_Ygl->screen_fbotex[info->idScreen], 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);

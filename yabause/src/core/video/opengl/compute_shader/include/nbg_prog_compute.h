@@ -157,8 +157,10 @@ static const char nbg_32bpp[] =
 "//32bpp\n"
 //Pas bon la
 "uint charaddr = cmd[idCmd+2]+ (idCellOffset + cellCoord.y*8u + cellCoord.x)<<2;\n"
-"uint dot = (readVdp2RamWord(charaddr) & 0xFFFFFFFFu;\n"
-"uint cramindex = coloroffset + dot;\n";
+"uint dot1 = readVdp2RamWord(charaddr);\n"
+"uint dot2 = readVdp2RamWord(charaddr+2);\n"
+"uint cramindex = ((dot1 & 0xFFu)<< 16) | (dot2 & 0xFFFFu);\n"
+"uint dot = dot1 & 0x8000;\n";
 
 static const char nbg_transparency[] =
 "//Transparency On\n"
@@ -308,8 +310,7 @@ static const char nbg_bmp_16bpp[] =
 "uint offsetx = (2*(texel.x));\n"
 "uint charaddr = cmd[2]+ offsety + offsetx;\n"
 "uint dot = (readVdp2RamWord(charaddr) & 0xFFFFu;)\n"
-"uint cramindex = coloroffset + dot;\n"
-"uint dot = cramindex & 0x8000;\n";
+"uint cramindex = coloroffset + dot;\n";
 
 static const char nbg_bmp_16bpp_rgb[] =
 "//16bpp_rgb\n"
