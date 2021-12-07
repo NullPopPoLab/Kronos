@@ -157,8 +157,8 @@ static const char nbg_16bpp_rgb[] =
 static const char nbg_32bpp[] =
 "//32bpp\n"
 "uint charaddr = cmd[idCmd+2]+ (idCellOffset + cellCoord.y*cellw + cellCoord.x)<<2;\n"
-"uint dot1 = readVdp2RamWord(charaddr);\n"
-"uint dot2 = readVdp2RamWord(charaddr+2);\n"
+"uint dot1 = (readVdp2RamWord(charaddr) & 0xFFFFu);\n"
+"uint dot2 = (readVdp2RamWord(charaddr+2) & 0xFFFFu);\n"
 "uint cramindex = ((dot1 & 0xFFu)<< 16) | (dot2 & 0xFFFFu);\n"
 "uint dot = dot1 & 0x8000;\n";
 
@@ -285,7 +285,6 @@ static const char nbg_bmp_main_f[] =
 static const char nbg_linescroll[] =
 "s.x = s.x + int(line[(size.y-texel.y)*cmd[10]*3+0]);\n"
 "s.y = s.y + int(line[(size.y-texel.y)*cmd[10]*3+1]);\n"
-"s &= (ivec2(cellw, cellh) - ivec2(1));\n"
 "if ((line[(size.y-texel.y)*cmd[10]*3+0] >= 0) && (line[(size.y-texel.y)*cmd[10]*3+1] < s.y)) s.x -= 1;\n";
 
 static const char nbg_bmp_4bpp[] =

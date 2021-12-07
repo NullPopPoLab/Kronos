@@ -50,51 +50,51 @@ static int getProgramBmpId(vdp2draw_struct *info) {
   int id = 0;
   int rank = 0;
   //Cram accesses
-  if (info->patternwh == 2) id |= 1 << rank;
+  if (info->patternwh == 2) id |= (1 << rank);
   rank += 1;
-	if (info->colornumber >= 3) id |= 0 << rank;
+	if (info->colornumber >= 3) id |= (0 << rank);
 	else {
-		if (Vdp2Internal.ColorMode == 0)  id |= 1 << rank;
-		else if (Vdp2Internal.ColorMode == 1)  id |= 2 << rank;
-		else if (Vdp2Internal.ColorMode == 2)  id |= 3 << rank;
+		if (Vdp2Internal.ColorMode == 0)  id |= (1 << rank);
+		else if (Vdp2Internal.ColorMode == 1)  id |= (2 << rank);
+		else if (Vdp2Internal.ColorMode == 2)  id |= (3 << rank);
 	}
 	rank += 2;
   //Start Type => all the same
   rank += 0;
-  id |= info->colornumber;
+  id |= (info->colornumber << rank);
   rank += 3;
   //Transparency ==> 2 values
 
-  if (info->transparencyenable) id |= 0 <<rank;
+  if (info->transparencyenable) id |= (0 <<rank);
   rank+=1;
   //SpecialPriority
   if (info->specialprimode == 2) {
     if (info->specialfunction & 1) {
-      if (info->specialcode & 0x01) id += 2 << rank;
-      else if (info->specialcode & 0x02) id += 3 << rank;
-      else if (info->specialcode & 0x04) id += 4 << rank;
-      else if (info->specialcode & 0x08) id += 5 << rank;
-      else if (info->specialcode & 0x10) id += 6 << rank;
-      else if (info->specialcode & 0x20) id += 7 << rank;
-      else if (info->specialcode & 0x40) id += 8 << rank;
-      else if (info->specialcode & 0x80) id += 9 << rank;
-      else id += 1 << rank;
+      if (info->specialcode & 0x01) id += (2 << rank);
+      else if (info->specialcode & 0x02) id += (3 << rank);
+      else if (info->specialcode & 0x04) id += (4 << rank);
+      else if (info->specialcode & 0x08) id += (5 << rank);
+      else if (info->specialcode & 0x10) id += (6 << rank);
+      else if (info->specialcode & 0x20) id += (7 << rank);
+      else if (info->specialcode & 0x40) id += (8 << rank);
+      else if (info->specialcode & 0x80) id += (9 << rank);
+      else id += (1 << rank);
     }
-    else id += 1 << rank;
+    else id += (1 << rank);
   }
   rank += 4;
   //Color calculation
   switch (info->specialcolormode)
   {
     case 1:
-      if (info->specialcolorfunction  == 0) id += 1 << rank;
+      if (info->specialcolorfunction  == 0) id += (1 << rank);
       break;
     case 2:
-      if (info->specialcolorfunction  == 0) id += 1 << rank;
-      else id += 2 << rank;;
+      if (info->specialcolorfunction  == 0) id += (1 << rank);
+      else id += (2 << rank);
       break;
    case 3:
-      id += 3 << rank;;
+      id += (3 << rank);
      break;
    default:
      break;
@@ -102,10 +102,10 @@ static int getProgramBmpId(vdp2draw_struct *info) {
   rank += 2;
   //CRAM/Mosaic support
   if (info->colornumber >= 3) {
-    if (info->mosaicxmask != 1 || info->mosaicymask != 1) id += 1 << rank; //PG_VDP2_MOSAIC
+    if (info->mosaicxmask != 1 || info->mosaicymask != 1) id += (1 << rank); //PG_VDP2_MOSAIC
   } else {
-    if (info->mosaicxmask != 1 || info->mosaicymask != 1) id += 2 << rank; //PG_VDP2_MOSAIC_CRAM
-    else id += 3 << rank; // PG_VDP2_NORMAL_CRAM
+    if (info->mosaicxmask != 1 || info->mosaicymask != 1) id += (2 << rank); //PG_VDP2_MOSAIC_CRAM
+    else id += (3 << rank); // PG_VDP2_NORMAL_CRAM
   }
   rank += 2;
   return id;
@@ -117,51 +117,51 @@ static int getProgramId(vdp2draw_struct *info, int colorId) {
   int colormode = colorId & 0x3;
   int colorfunc = (colorId >> 2) & 0x1;
 	//Cram accesses
-  if (info->patternwh == 2) id |= 1 << rank;
+  if (info->patternwh == 2) id |= (1 << rank);
   rank += 1;
-	if (info->colornumber >= 3) id |= 0 << rank;
+	if (info->colornumber >= 3) id |= (0 << rank);
 	else {
-		if (Vdp2Internal.ColorMode == 0)  id |= 1 << rank;
-		else if (Vdp2Internal.ColorMode == 1)  id |= 2 << rank;
-		else if (Vdp2Internal.ColorMode == 2)  id |= 3 << rank;
+		if (Vdp2Internal.ColorMode == 0)  id |= (1 << rank);
+		else if (Vdp2Internal.ColorMode == 1)  id |= (2 << rank);
+		else if (Vdp2Internal.ColorMode == 2)  id |= (3 << rank);
 	}
 	rank += 2;
   //Start Type => all the same
   rank += 0;
-  id |= info->colornumber;
+  id |= (info->colornumber << rank);
   rank += 3;
   //Transparency ==> 2 values
 
-  if (info->transparencyenable) id |= 0 <<rank;
+  if (info->transparencyenable) id |= (0 <<rank);
   rank+=1;
   //SpecialPriority
   if (info->specialprimode == 2) {
     if (info->specialfunction & 1) {
-      if (info->specialcode & 0x01) id += 2 << rank;
-      else if (info->specialcode & 0x02) id += 3 << rank;
-      else if (info->specialcode & 0x04) id += 4 << rank;
-      else if (info->specialcode & 0x08) id += 5 << rank;
-      else if (info->specialcode & 0x10) id += 6 << rank;
-      else if (info->specialcode & 0x20) id += 7 << rank;
-      else if (info->specialcode & 0x40) id += 8 << rank;
-      else if (info->specialcode & 0x80) id += 9 << rank;
-      else id += 1 << rank;
+      if (info->specialcode & 0x01) id += (2 << rank);
+      else if (info->specialcode & 0x02) id += (3 << rank);
+      else if (info->specialcode & 0x04) id += (4 << rank);
+      else if (info->specialcode & 0x08) id += (5 << rank);
+      else if (info->specialcode & 0x10) id += (6 << rank);
+      else if (info->specialcode & 0x20) id += (7 << rank);
+      else if (info->specialcode & 0x40) id += (8 << rank);
+      else if (info->specialcode & 0x80) id += (9 << rank);
+      else id += (1 << rank);
     }
-    else id += 1 << rank;
+    else id += (1 << rank);
   }
   rank += 4;
   //Color calculation
   switch (colormode)
   {
     case 1:
-      if (colorfunc == 0) id += 1 << rank;
+      if (colorfunc == 0) id += (1 << rank);
       break;
     case 2:
-      if (colorfunc == 0) id += 1 << rank;
-      else id += 2 << rank;;
+      if (colorfunc == 0) id += (1 << rank);
+      else id += (2 << rank);
       break;
    case 3:
-      id += 3 << rank;;
+      id += (3 << rank);
      break;
    default:
      break;
@@ -169,13 +169,13 @@ static int getProgramId(vdp2draw_struct *info, int colorId) {
   rank += 2;
   //CRAM/Mosaic support
   if (info->colornumber >= 3) {
-    if (info->mosaicxmask != 1 || info->mosaicymask != 1) id += 1 << rank; //PG_VDP2_MOSAIC
+    if (info->mosaicxmask != 1 || info->mosaicymask != 1) id += (1 << rank); //PG_VDP2_MOSAIC
   } else {
-    if (info->mosaicxmask != 1 || info->mosaicymask != 1) id += 2 << rank; //PG_VDP2_MOSAIC_CRAM
-    else id += 3 << rank; // PG_VDP2_NORMAL_CRAM
+    if (info->mosaicxmask != 1 || info->mosaicymask != 1) id += (2 << rank); //PG_VDP2_MOSAIC_CRAM
+    else id += (3 << rank); // PG_VDP2_NORMAL_CRAM
   }
   rank += 2;
-  id |= (info->idScreen - NBG0) << rank;
+  id |= ((info->idScreen - NBG0) << rank);
   rank += 2;
   return id;
 }
@@ -184,7 +184,9 @@ static GLuint createNBGCellProgram(vdp2draw_struct *info, int colorId) {
 	const GLchar * a_prg_vdp2_map[11];
 	int nbProg = 0;
 	int progId = getProgramId(info, colorId);
+  // YuiMsg("GetProg %x %d\n", progId, info->patternwh);
 	if (prg_vdp2_cell[progId] == 0) {
+    // YuiMsg("Compile Prog %x\n", progId);
       int colormode = colorId & 0x3;
       int colorfunc = (colorId >> 2) & 0x1;
 		  //CRAM access
@@ -372,12 +374,13 @@ void DrawCellOrderCS(vdp2draw_struct * info, int x, int y) {
   int *cmd = NBGCmdList[id][info->NbCell[id]++];
   if (((info->cellh == 16) && (info->cellw == 16))||
       ((info->cellh == 8) && (info->cellw == 8))) {
-    //Quad cell 16x16
+    //Quad cell 16x16 or singleCell 8x8
+    // YuiMsg("Add cell %d (%d) (%d %d)!\n", info->idScreen, info->patternwh, info->cellh, info->cellw);
     DrawSmallCellCS(info, x, y, cmd);
     return;
   }
   //We have a big Cell!!!
-  YuiMsg("Big cell %d (%d %d)!\n", info->idScreen, info->cellh, info->cellw);
+  // YuiMsg("Big cell %d (%d %d)!\n", info->idScreen, info->cellh, info->cellw);
   int charaddr;
   for (int ystep = 0; ystep < info->cellh; ystep+=8) {
     for (int xstep = 0; xstep < info->cellw; xstep+=8) {
@@ -476,6 +479,7 @@ void CSDrawNBGCell(vdp2draw_struct* info) {
 
   for (int colorId = 0 ; colorId<0x8; colorId++) {
       if (info->NbCell[colorId] != 0) {
+        // YuiMsg("Render %d\n", info->patternwh);
         int id = createNBGCellProgram(info, colorId);
         glUseProgram(id);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cmd_);
@@ -505,6 +509,11 @@ void CSDrawNBGBitmapScroll(vdp2draw_struct* info, int width, int height) {
   cmd[9] = info->cellh;
   cmd[10] = info->lineinc;
   //Lineinfo est un buffer que pour nbg1 et nbg2.
+
+  if (info->islinescroll != 3) {
+    YuiMsg("Shader has to be modified for VDPLINE_SX!!!\n");
+    abort();
+  }
 
   int workgroup_x = (_Ygl->rwidth+4)/8;
   int workgroup_y = (_Ygl->rheight+4)/8;
