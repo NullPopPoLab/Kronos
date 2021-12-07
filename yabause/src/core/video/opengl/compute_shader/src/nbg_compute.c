@@ -65,7 +65,7 @@ static int getProgramBmpId(vdp2draw_struct *info) {
   rank += 3;
   //Transparency ==> 2 values
 
-  if (info->transparencyenable) id |= (0 <<rank);
+  if (info->transparencyenable) id |= (1 <<rank);
   rank+=1;
   //SpecialPriority
   if (info->specialprimode == 2) {
@@ -132,7 +132,7 @@ static int getProgramId(vdp2draw_struct *info, int colorId) {
   rank += 3;
   //Transparency ==> 2 values
 
-  if (info->transparencyenable) id |= (0 <<rank);
+  if (info->transparencyenable) id |= (1 <<rank);
   rank+=1;
   //SpecialPriority
   if (info->specialprimode == 2) {

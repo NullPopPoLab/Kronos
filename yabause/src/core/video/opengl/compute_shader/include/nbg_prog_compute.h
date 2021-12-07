@@ -163,7 +163,7 @@ static const char nbg_32bpp[] =
 "uint dot1 = (readVdp2RamWord(charaddr) & 0xFFFFu);\n"
 "uint dot2 = (readVdp2RamWord(charaddr+2) & 0xFFFFu);\n"
 "uint cramindex = ((dot1 & 0xFFu)<< 16) | (dot2 & 0xFFFFu);\n"
-"uint dot = dot1 & 0x8000;\n";
+"uint dot = dot1 & 0x8000u;\n";
 
 static const char nbg_transparency[] =
 "//Transparency On\n"
