@@ -371,12 +371,12 @@ void DrawSmallCellCS(vdp2draw_struct * info, int x, int y, int* cmd) {
 
 void DrawCellOrderCS(vdp2draw_struct * info, int x, int y) {
   int id = info->specialcolormode | ((info->specialcolorfunction & 0x1)<<2);
-  int *cmd = NBGCmdList[id][info->NbCell[id]++];
+  YuiMsg("Cell (%dx%d) @ (%x %x)\n", info->cellw, info->cellh, info->x, info->y);
   if (((info->cellh == 16) && (info->cellw == 16))||
       ((info->cellh == 8) && (info->cellw == 8))) {
     //Quad cell 16x16 or singleCell 8x8
     // YuiMsg("Add cell %d (%d) (%d %d)!\n", info->idScreen, info->patternwh, info->cellh, info->cellw);
-    DrawSmallCellCS(info, x, y, cmd);
+    DrawSmallCellCS(info, x, y, NBGCmdList[id][info->NbCell[id]++]);
     return;
   }
   //We have a big Cell!!!
@@ -384,6 +384,7 @@ void DrawCellOrderCS(vdp2draw_struct * info, int x, int y) {
   int charaddr;
   for (int ystep = 0; ystep < info->cellh; ystep+=8) {
     for (int xstep = 0; xstep < info->cellw; xstep+=8) {
+      int *cmd = NBGCmdList[id][info->NbCell[id]++];
       switch (info->colornumber)
       {
       case 0: // 4 BPP
@@ -413,7 +414,6 @@ void DrawCellOrderCS(vdp2draw_struct * info, int x, int y) {
       cmd[7] = info->alpha;
       cmd[8] = info->cellw;
       cmd[9] = info->cellh;
-      cmd = NBGCmdList[id][info->NbCell[id]++];
     }
   }
 }

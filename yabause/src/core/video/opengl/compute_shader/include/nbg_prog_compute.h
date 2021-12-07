@@ -115,7 +115,7 @@ static const char nbg_cell_main_f[] =
 "{\n"
 "uint idCmd = gl_WorkGroupID.x * 10;\n"
 "ivec2 size = imageSize(outSurface);\n"
-"ivec2 texel = ivec2(cmd[idCmd]+gl_LocalInvocationID.x,size.y-(cmd[idCmd+1]+gl_LocalInvocationID.y));\n"
+"ivec2 texel = ivec2(cmd[idCmd]+gl_LocalInvocationID.x,(size.y-1)-(cmd[idCmd+1]+gl_LocalInvocationID.y));\n"
 "vec4 outcolor = vec4(0.0);\n"
 "uint cellw = cmd[idCmd+8];\n"
 "uint cellh = cmd[idCmd+9];\n"
