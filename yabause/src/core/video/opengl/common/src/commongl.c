@@ -28,6 +28,7 @@
 #include "debug.h"
 #include "error.h"
 #include "vdp1_compute.h"
+#include "vidcs.h"
 
 // #define __USE_OPENGL_DEBUG__
 
@@ -3260,7 +3261,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
       glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->screen_fbo);
       glDrawBuffers(1, &DrawBuffers[i]);
     }
-    if ( isNBG(i) == 0)
+    if( (VIDCore->id != VIDCORE_CS) || ( isNBG(i) == 0))
       drawScreen[i] = DrawVDP2Screen(varVdp2Regs, i);
     else
       drawScreen[i] = 1;

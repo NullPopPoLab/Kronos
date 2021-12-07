@@ -156,7 +156,7 @@ static const char nbg_16bpp_rgb[] =
 
 static const char nbg_32bpp[] =
 "//32bpp\n"
-"uint charaddr = cmd[idCmd+2]+ (idCellOffset + cellCoord.y*cellw + cellCoord.x)<<2;\n"
+"uint charaddr = cmd[idCmd+2]+ ((idCellOffset + cellCoord.y*cellw + cellCoord.x)<<2);\n"
 "uint dot1 = (readVdp2RamWord(charaddr) & 0xFFFFu);\n"
 "uint dot2 = (readVdp2RamWord(charaddr+2) & 0xFFFFu);\n"
 "uint cramindex = ((dot1 & 0xFFu)<< 16) | (dot2 & 0xFFFFu);\n"
