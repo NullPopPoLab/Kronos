@@ -354,7 +354,7 @@ static GLuint createNBGBitmapScrollProgram(vdp2draw_struct *info) {
 }
 
 
-int NBGCmdList[0x8][0x4000][10];
+int NBGCmdList[0x8][0x4000][11];
 
 void DrawSmallCellCS(vdp2draw_struct * info, int x, int y, int* cmd) {
   cmd[0] = x;
@@ -367,11 +367,12 @@ void DrawSmallCellCS(vdp2draw_struct * info, int x, int y, int* cmd) {
   cmd[7] = info->alpha;
   cmd[8] = 8;
   cmd[9] = 8;
+  cmd[10] = info->flipfunction;
 }
 
 void DrawCellOrderCS(vdp2draw_struct * info, int x, int y) {
   int id = info->specialcolormode | ((info->specialcolorfunction & 0x1)<<2);
-  YuiMsg("Cell (%dx%d) @ (%x %x)\n", info->cellw, info->cellh, info->x, info->y);
+  // YuiMsg("Add Cell (%dx%d)@(%d,%d) (%d)\n", info->cellw, info->cellh, x, y, info->flipfunction);
   if (((info->cellh == 16) && (info->cellw == 16))||
       ((info->cellh == 8) && (info->cellw == 8))) {
     //Quad cell 16x16 or singleCell 8x8
@@ -414,6 +415,7 @@ void DrawCellOrderCS(vdp2draw_struct * info, int x, int y) {
       cmd[7] = info->alpha;
       cmd[8] = info->cellw;
       cmd[9] = info->cellh;
+      cmd[10] = info->flipfunction;
     }
   }
 }
@@ -483,7 +485,7 @@ void CSDrawNBGCell(vdp2draw_struct* info) {
         int id = createNBGCellProgram(info, colorId);
         glUseProgram(id);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cmd_);
-        glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, info->NbCell[colorId]*10*sizeof(int), (void*)NBGCmdList[colorId]);
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, info->NbCell[colorId]*11*sizeof(int), (void*)NBGCmdList[colorId]);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo_cmd_);
         glDispatchCompute(info->NbCell[colorId], 1, 1);
         info->NbCell[colorId] = 0;
@@ -512,7 +514,7 @@ void CSDrawNBGBitmapScroll(vdp2draw_struct* info, int width, int height) {
 
   if (info->islinescroll != 3) {
     YuiMsg("Shader has to be modified for VDPLINE_SX!!!\n");
-    abort();
+    // abort();
   }
 
   int workgroup_x = (_Ygl->rwidth+4)/8;
