@@ -111,7 +111,7 @@ else ifneq (,$(findstring rockpro64,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
-	LDFLAGS += -lpthread -lGL
+	LDFLAGS += -lpthread
 	ARCH_IS_LINUX = 1
 	HAVE_SSE = 0
 	FORCE_GLES = 1
@@ -123,7 +123,7 @@ else ifeq ($(platform), odroid-n2)
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
-	LDFLAGS += -lpthread -lGL
+	LDFLAGS += -lpthread
 	ARCH_IS_LINUX = 1
 	HAVE_SSE = 0
 	FORCE_GLES = 1
@@ -139,7 +139,7 @@ else ifneq (,$(findstring odroid,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
-	LDFLAGS += -lpthread -lGL
+	LDFLAGS += -lpthread
 	ARCH_IS_LINUX = 1
 	BOARD := $(shell cat /proc/cpuinfo | grep -i odroid | awk '{print $$3}')
 

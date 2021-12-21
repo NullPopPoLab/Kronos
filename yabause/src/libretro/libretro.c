@@ -1682,35 +1682,21 @@ bool retro_load_game(const struct retro_game_info *info)
 
    check_variables();
 
-   snprintf(stv_bios_path, sizeof(stv_bios_path), "%s%ckronos%cstvbios.zip", g_system_dir, slash, slash);
+   snprintf(stv_bios_path, sizeof(stv_bios_path), "%s%cstvbios.zip", g_system_dir, slash);
    if (does_file_exist(stv_bios_path) != 1)
    {
       log_cb(RETRO_LOG_WARN, "%s NOT FOUND\n", stv_bios_path);
       snprintf(stv_bios_path, sizeof(stv_bios_path), "%s%cstvbios.zip", g_system_dir, slash);
-      if (does_file_exist(stv_bios_path) != 1)
-      {
-         log_cb(RETRO_LOG_WARN, "%s NOT FOUND\n", stv_bios_path);
-      }
    }
 
-   snprintf(bios_path, sizeof(bios_path), "%s%ckronos%csaturn_bios.bin", g_system_dir, slash, slash);
+   snprintf(bios_path, sizeof(bios_path), "%s%csaturn_bios.bin", g_system_dir, slash);
    if (does_file_exist(bios_path) != 1)
    {
       log_cb(RETRO_LOG_WARN, "%s NOT FOUND\n", bios_path);
-      snprintf(bios_path, sizeof(bios_path), "%s%csaturn_bios.bin", g_system_dir, slash);
+      snprintf(bios_path, sizeof(bios_path), "%s%csega_101.bin", g_system_dir, slash);
       if (does_file_exist(bios_path) != 1)
       {
          log_cb(RETRO_LOG_WARN, "%s NOT FOUND\n", bios_path);
-         snprintf(bios_path, sizeof(bios_path), "%s%csega_101.bin", g_system_dir, slash);
-         if (does_file_exist(bios_path) != 1)
-         {
-            log_cb(RETRO_LOG_WARN, "%s NOT FOUND\n", bios_path);
-            snprintf(bios_path, sizeof(bios_path), "%s%cmpr-17933.bin", g_system_dir, slash);
-            if (does_file_exist(bios_path) != 1)
-            {
-               log_cb(RETRO_LOG_WARN, "%s NOT FOUND\n", bios_path);
-            }
-         }
       }
    }
 
