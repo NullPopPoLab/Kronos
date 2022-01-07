@@ -1689,11 +1689,11 @@ bool retro_load_game(const struct retro_game_info *info)
       snprintf(stv_bios_path, sizeof(stv_bios_path), "%s%cstvbios.zip", g_system_dir, slash);
    }
 
-   snprintf(bios_path, sizeof(bios_path), "%s%csaturn_bios.bin", g_system_dir, slash);
+   snprintf(bios_path, sizeof(bios_path), "%s%csaturn%csaturn_bios.bin", g_system_dir, slash, slash);
    if (does_file_exist(bios_path) != 1)
    {
       log_cb(RETRO_LOG_WARN, "%s NOT FOUND\n", bios_path);
-      snprintf(bios_path, sizeof(bios_path), "%s%csega_101.bin", g_system_dir, slash);
+      snprintf(bios_path, sizeof(bios_path), "%s%csaturn%csega_101.bin", g_system_dir, slash, slash);
       if (does_file_exist(bios_path) != 1)
       {
          log_cb(RETRO_LOG_WARN, "%s NOT FOUND\n", bios_path);
