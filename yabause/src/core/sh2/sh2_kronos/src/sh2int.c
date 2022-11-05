@@ -35,13 +35,8 @@
 
 #include "cs2.h"
 
-#ifdef xSH2_ASYNC
-#define LOCK(A) sem_wait(&A->lock)
-#define UNLOCK(A) sem_post(&A->lock)
-#else
 #define LOCK(A)
 #define UNLOCK(A)
-#endif
 
 
 extern void SH2undecoded(SH2_struct * sh);
@@ -53,7 +48,6 @@ void SH2KronosIOnFrame(SH2_struct *context) {
 
 void SH2HandleInterrupts(SH2_struct *context)
 {
-  if (context->isInIt != 0) return;
   LOCK(context);
   if (context->NumberOfInterrupts != 0)
   {
@@ -61,7 +55,6 @@ void SH2HandleInterrupts(SH2_struct *context)
     {
       u32 oldpc = context->regs.PC;
       u32 persr = context->regs.SR.part.I;
-      // if (context->interrupts[context->NumberOfInterrupts - 1].vector != 0xB) context->isInIt = context->regs.PC; //NMI has a special handling
       context->regs.R[15] -= 4;
       SH2MappedMemoryWriteLong(context, context->regs.R[15], context->regs.SR.all);
       context->regs.R[15] -= 4;
@@ -110,8 +103,7 @@ static u16 FASTCALL FetchVram(SH2_struct *context, u32 addr)
   return SH2MappedMemoryReadWord(context, addr);
 }
 
-opcode_func cacheCodeMSH2[7][0x80000];
-opcode_func cacheCodeSSH2[7][0x80000];
+opcode_func cacheCode[2][7][0x80000];
 //////////////////////////////////////////////////////////////////////////////
 
 static u16 FASTCALL FetchInvalid(SH2_struct *context, UNUSED u32 addr)
@@ -123,10 +115,7 @@ void decode(SH2_struct *context) {
   int id = (context->regs.PC >> 20) & 0xFFF;
   u16 opcode = krfetchlist[id](context, context->regs.PC);
 
-  if (context == MSH2)
-    cacheCodeMSH2[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] = opcodeTable[opcode];
-  else
-    cacheCodeSSH2[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] = opcodeTable[opcode];
+  cacheCode[context->isslave][cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] = opcodeTable[opcode];
   opcodeTable[opcode](context);
 }
 
@@ -142,21 +131,23 @@ int SH2KronosInterpreterInit()
 {
 
    int i,j;
+
+
    for(i=1; i<6; i++)
      for(j=0; j<0x80000; j++) {
-       cacheCodeMSH2[i][j] = decode;
-       cacheCodeSSH2[i][j] = decode;
+       cacheCode[0][i][j] = decode;
+       cacheCode[1][i][j] = decode;
      }
 
    for(j=0; j<0x80000; j++) {
-     cacheCodeMSH2[6][j] = SH2undecoded;
-     cacheCodeSSH2[6][j] = SH2undecoded;
+     cacheCode[0][6][j] = SH2undecoded;
+     cacheCode[1][6][j] = SH2undecoded;
    }
 
    for(j=0; j<0x80000; j++) {
      //Special BAckupHandled case
-     cacheCodeMSH2[0][j] = biosDecode;
-     cacheCodeSSH2[0][j] = biosDecode;
+     cacheCode[0][0][j] = biosDecode;
+     cacheCode[1][0][j] = biosDecode;
    }
 
 
@@ -287,18 +278,9 @@ u8 execInterrupt = 0;
 FASTCALL void SH2KronosInterpreterExecLoop(SH2_struct *context, u32 cycles)
 {
   u32 target_cycle = context->cycles + cycles;
- char res[512];
- int inIt;
-  execInterrupt = 0;
-   while (execInterrupt == 0)
+   while (context->cycles < target_cycle)
    {
-     inIt = context->isInIt;
-     if (context == MSH2)
-       cacheCodeMSH2[cacheId[(context->regs.PC >> 20) & 0xFFF]][(context->regs.PC >> 1) & 0x7FFFF](context);
-     else
-       cacheCodeSSH2[cacheId[(context->regs.PC >> 20) & 0xFFF]][(context->regs.PC >> 1) & 0x7FFFF](context);
-     execInterrupt |= (context->cycles >= target_cycle);
-     execInterrupt |= (inIt != context->isInIt);
+     cacheCode[context->isslave][cacheId[(context->regs.PC >> 20) & 0xFFF]][(context->regs.PC >> 1) & 0x7FFFF](context);
    }
 }
 
@@ -345,10 +327,7 @@ FASTCALL void SH2KronosDebugInterpreterExec(SH2_struct *context, u32 cycles)
 FASTCALL void SH2KronosInterpreterTestExec(SH2_struct *context, u32 cycles)
 {
   u32 target_cycle = context->cycles + cycles;
-  if (context == MSH2)
-    cacheCodeMSH2[cacheId[(context->regs.PC >> 20) & 0xFFF]][(context->regs.PC >> 1) & 0x7FFFF](context);
-  else
-    cacheCodeSSH2[cacheId[(context->regs.PC >> 20) & 0xFFF]][(context->regs.PC >> 1) & 0x7FFFF](context);
+  cacheCode[context->isslave][cacheId[(context->regs.PC >> 20) & 0xFFF]][(context->regs.PC >> 1) & 0x7FFFF](context);
 }
 
 
@@ -581,16 +560,10 @@ void SH2KronosWriteNotify(SH2_struct *context, u32 start, u32 length){
     int id = ((start + i) >> 20) & 0xFFF;
     int addr = (start + i) >> 1;
     if (cacheId[id] == 0) {  //Special BAckupHandled case
-      if (context == MSH2)
-        cacheCodeMSH2[cacheId[id]][addr & 0x7FFFF] = biosDecode;
-      else
-        cacheCodeSSH2[cacheId[id]][addr & 0x7FFFF] = biosDecode;
+      cacheCode[context->isslave][cacheId[id]][addr & 0x7FFFF] = biosDecode;
     }
     else
-      if (context == MSH2)
-        cacheCodeMSH2[cacheId[id]][(addr) & 0x7FFFF] = decode;
-      else
-        cacheCodeSSH2[cacheId[id]][(addr) & 0x7FFFF] = decode;
+      cacheCode[context->isslave][cacheId[id]][(addr) & 0x7FFFF] = decode;
   }
 }
 

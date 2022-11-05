@@ -625,7 +625,11 @@ void YglTmPull(YglTextureManager * tm, u32 flg){
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tm->textureID);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
-    tm->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_WRITE_BIT | flg | GL_MAP_UNSYNCHRONIZED_BIT  );
+    if (flg) {
+      tm->texture = (unsigned int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT  );
+    } else {
+      tm->texture = (unsigned int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_WRITE_BIT  );
+    }
     if (tm->texture == NULL){
       abort();
     }
@@ -882,7 +886,7 @@ void YglGenerate() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[1]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RG, _Ygl->vdp1width, _Ygl->vdp1height, 0, GL_RG, GL_UNSIGNED_BYTE, NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->vdp1width, _Ygl->vdp1height, 0, GL_RG, GL_UNSIGNED_BYTE, NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -894,7 +898,7 @@ void YglGenerate() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[3]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RG, _Ygl->vdp1width, _Ygl->vdp1height, 0, GL_RG, GL_UNSIGNED_BYTE, NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->vdp1width, _Ygl->vdp1height, 0, GL_RG, GL_UNSIGNED_BYTE, NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -1370,7 +1374,7 @@ int YglInit(int width, int height, unsigned int depth) {
 
 #if !defined(__LIBRETRO__)
   // This line is causing a black screen on the libretro port
-  glGetIntegerv(GL_FRAMEBUFFER_BINDING,&_Ygl->default_fbo);
+  glGetIntegerv(GL_FRAMEBUFFER_BINDING,(int *)&_Ygl->default_fbo);
 #endif
 
   glClearBufferfv(GL_COLOR, 0, col);
@@ -1433,7 +1437,7 @@ int YglInit(int width, int height, unsigned int depth) {
   glBindTexture(GL_TEXTURE_2D, 0);
   _Ygl->st = 0;
   _Ygl->aamode = AA_NONE;
-  _Ygl->stretch = 0;
+  _Ygl->stretch = ORIGINAL_RATIO;
   _Ygl->wireframe_mode = 0;
 
   return 0;
@@ -2356,7 +2360,7 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
 }
 
 
-int YglQuadRbg0(RBGDrawInfo * rbg, YglTexture * output, YglCache * c, YglCache * line, int rbg_type, YglTextureManager *tm, Vdp2 *varVdp2Regs) {
+int YglQuadRbg0(RBGDrawInfo * rbg, YglTexture * output, YglCache * c, int rbg_type, YglTextureManager *tm, Vdp2 *varVdp2Regs) {
   unsigned int x, y;
   YglProgram *program;
   texturecoordinate_struct *tmp;
@@ -2448,8 +2452,6 @@ int YglQuadRbg0(RBGDrawInfo * rbg, YglTexture * output, YglCache * c, YglCache *
     x = c->x;
     y = c->y;
 
-
-
     /*
     0 +---+ 1
       |   |
@@ -2464,29 +2466,8 @@ int YglQuadRbg0(RBGDrawInfo * rbg, YglTexture * output, YglCache * c, YglCache *
     tmp[0].t = tmp[1].t = tmp[3].t = (float)(y)+ATLAS_BIAS;
     tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->cellh) - ATLAS_BIAS;
   }
-  if (line == NULL) {
     tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = tmp[4].r = tmp[5].r = 0;
     tmp[0].q = tmp[1].q = tmp[2].q = tmp[3].q = tmp[4].q = tmp[5].q = 0;
-  }
-  else {
-    tmp[0].r = (float)(line->x) + ATLAS_BIAS;
-    tmp[0].q = (float)(line->y) + ATLAS_BIAS;
-
-    tmp[1].r = (float)(line->x) + ATLAS_BIAS;
-    tmp[1].q = (float)(line->y+1) - ATLAS_BIAS;
-
-    tmp[2].r = (float)(line->x + input->cellh) - ATLAS_BIAS;
-    tmp[2].q = (float)(line->y+1) - ATLAS_BIAS;
-
-    tmp[3].r = (float)(line->x) + ATLAS_BIAS;
-    tmp[3].q = (float)(line->y) + ATLAS_BIAS;
-
-    tmp[4].r = (float)(line->x +input->cellh ) - ATLAS_BIAS;
-    tmp[4].q = (float)(line->y + 1 ) - ATLAS_BIAS;
-
-    tmp[5].r = (float)(line->x + input->cellh) - ATLAS_BIAS;
-    tmp[5].q = (float)(line->y) + ATLAS_BIAS;
-  }
   return 0;
 }
 
@@ -2511,7 +2492,7 @@ void YglEraseWriteVDP1(int id) {
   int drawBuf[2] = {0};
   glGetIntegerv(GL_DRAW_BUFFER0, &drawBuf[0]);
   glGetIntegerv(GL_DRAW_BUFFER1, &drawBuf[1]);
-  glDrawBuffers(2, &DrawBuffers[id*2]);
+  glDrawBuffers(2, (const GLenum*)&DrawBuffers[id*2]);
 
   _Ygl->vdp1_stencil_mode = 0;
 
@@ -2541,7 +2522,7 @@ void YglEraseWriteVDP1(int id) {
   glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
   FRAMELOG("YglEraseWriteVDP1xx: clear %d\n", id);
   //Get back to drawframe
-  glDrawBuffers(2, &drawBuf[0]);
+  glDrawBuffers(2, (const GLenum*)&drawBuf[0]);
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
 
@@ -2663,7 +2644,7 @@ void YglRenderVDP1(void) {
   YglGenFrameBuffer(0);
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
-  glDrawBuffers(2, &DrawBuffers[_Ygl->drawframe*2]);
+  glDrawBuffers(2, (const GLenum*)&DrawBuffers[_Ygl->drawframe*2]);
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
@@ -2696,7 +2677,7 @@ void YglRenderVDP1(void) {
     glDisable(GL_STENCIL_TEST);
 
   for( j=0;j<(level->prgcurrent+1); j++ ) {
-    _Ygl->vdp1On[_Ygl->drawframe] |= renderVDP1Level(level, j, &cprg, mat, varVdp2Regs);
+    _Ygl->vdp1On[_Ygl->drawframe] |= renderVDP1Level(level, j, (int*)&cprg, mat, varVdp2Regs);
     level->prg[j].currentQuad = 0;
   }
 
@@ -2873,7 +2854,7 @@ static void YglUpdateVDP1FB(void) {
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex);
     glTexSubImage2D(GL_TEXTURE_2D,0,0,0,512, 256,GL_RGBA, GL_UNSIGNED_BYTE,write_fb);
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
-    glDrawBuffers(1, &DrawBuffers[_Ygl->drawframe]);
+    glDrawBuffers(1, (const GLenum*)&DrawBuffers[_Ygl->drawframe]);
     glViewport(0,0, _Ygl->vdp1width, _Ygl->vdp1height);
     YglBlitVDP1(_Ygl->vdp1AccessTex, 512, 256, 1);
     // clean up
@@ -3082,6 +3063,25 @@ GLuint getVDP1fb(int id) {
   return _Ygl->vdp1FrameBuff[_Ygl->readframe*2 + id];
 }
 
+void finishRender() {
+  for (int i=0; i<SPRITE; i++)
+    YglReset(_Ygl->vdp2levels[i]);
+  glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
+  glUseProgram(0);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER,0);
+  glDisableVertexAttribArray(0);
+  glDisableVertexAttribArray(1);
+  glDisableVertexAttribArray(2);
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_SCISSOR_TEST);
+  glDisable(GL_STENCIL_TEST);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  OSDDisplayMessages(NULL,0,0);
+
+  _Ygl->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
+}
+
 void YglRender(Vdp2 *varVdp2Regs) {
    GLuint cprg=0;
    GLuint srcTexture;
@@ -3169,7 +3169,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
    YglGenFrameBuffer(0);
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
-  glDrawBuffers(NB_RENDER_LAYER, &DrawBuffers[0]);
+  glDrawBuffers(NB_RENDER_LAYER, (const GLenum*)&DrawBuffers[0]);
   //glClearBufferfv(GL_COLOR, 0, col);
 #ifdef DEBUG_BLIT
   //glClearBufferfv(GL_COLOR, 1, col);
@@ -3183,10 +3183,10 @@ void YglRender(Vdp2 *varVdp2Regs) {
    glGetIntegerv( GL_VIEWPORT, _Ygl->m_viewport );
    glScissor(0, 0, _Ygl->width, _Ygl->height);
    glEnable(GL_SCISSOR_TEST);
-
-   if ((YglTM_vdp2 == NULL)||(yabsys.screenOn == 0)) {
+   if ((YglTM_vdp2 == NULL)||((varVdp2Regs->TVMD & 0x8000)==0)) {
      glClearBufferfv(GL_COLOR, 0, col);
-     goto render_finish;
+     finishRender();
+     return;
    }
    glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
@@ -3215,14 +3215,14 @@ void YglRender(Vdp2 *varVdp2Regs) {
       glScissor(0, 0, _Ygl->width, _Ygl->height);
       glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->rbg_compute_fbo);
       if ( i == RBG0)
-        glDrawBuffers(1, &DrawBuffers[0]);
+        glDrawBuffers(1, (const GLenum*)&DrawBuffers[0]);
       else
-        glDrawBuffers(1, &DrawBuffers[1]);
+        glDrawBuffers(1, (const GLenum*)&DrawBuffers[1]);
     } else {
       glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
       glScissor(0, 0, _Ygl->rwidth, _Ygl->rheight);
       glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->screen_fbo);
-      glDrawBuffers(1, &DrawBuffers[i]);
+      glDrawBuffers(1, (const GLenum*)&DrawBuffers[i]);
     }
     drawScreen[i] = DrawVDP2Screen(varVdp2Regs, i);
   }
@@ -3307,12 +3307,17 @@ void YglRender(Vdp2 *varVdp2Regs) {
 
   modescreens[6] =  setupBlend(varVdp2Regs, 6);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->back_fbo);
-  glDrawBuffers(1, &DrawBuffers[0]);
+  glDrawBuffers(1, (const GLenum*)&DrawBuffers[0]);
   //glClearBufferfv(GL_COLOR, 0, col);
-  if ((varVdp2Regs->BKTAU & 0x8000) != 0) {
-    YglDrawBackScreen();
-  }else{
-    glClearBufferfv(GL_COLOR, 0, _Ygl->clear);
+  if ((Vdp2Regs->TVMD & 0x8100) == 0) {
+    float black[4] = {0.0};
+    glClearBufferfv(GL_COLOR, 0, black);
+  } else {
+    if ((varVdp2Regs->BKTAU & 0x8000) != 0) {
+      YglDrawBackScreen();
+    }else{
+      glClearBufferfv(GL_COLOR, 0, _Ygl->clear);
+    }
   }
 
 #ifdef __LIBRETRO__
@@ -3320,7 +3325,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
 #else
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
 #endif
-  glDrawBuffers(NB_RENDER_LAYER, &DrawBuffers[0]);
+  glDrawBuffers(NB_RENDER_LAYER, (const GLenum*)&DrawBuffers[0]);
   glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
   YglBlitTexture( prioscreens, modescreens, isRGB, isBlur, isPerline, isShadow, lncl_draw, getVDP1fb, winS_draw, winS_mode_draw, win0_draw, win0_mode_draw, win1_draw, win1_mode_draw, win_op_draw, useLineColorOffset, varVdp2Regs);
   srcTexture = _Ygl->original_fbotex[0];
@@ -3331,24 +3336,8 @@ void YglRender(Vdp2 *varVdp2Regs) {
    YglBlitFramebuffer(srcTexture, _Ygl->width, _Ygl->height, w, h);
 #endif
 
-render_finish:
+  finishRender();
 
-  for (int i=0; i<SPRITE; i++)
-    YglReset(_Ygl->vdp2levels[i]);
-  glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
-  glUseProgram(0);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER,0);
-  glDisableVertexAttribArray(0);
-  glDisableVertexAttribArray(1);
-  glDisableVertexAttribArray(2);
-  glDisable(GL_DEPTH_TEST);
-  glDisable(GL_SCISSOR_TEST);
-  glDisable(GL_STENCIL_TEST);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  OSDDisplayMessages(NULL,0,0);
-
-  _Ygl->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
   return;
 }
 
@@ -3394,7 +3383,7 @@ u32 * YglGetColorRamPointer(int line) {
   }
 
   if (_Ygl->cram_tex_buf == NULL) {
-    _Ygl->cram_tex_buf = malloc(2048 * 4*512);
+    _Ygl->cram_tex_buf = (u32*)malloc(2048 * 4*512);
     memset(_Ygl->cram_tex_buf, 0, 2048 * 4*512);
     glTexSubImage2D(GL_TEXTURE_2D,0,0,0,2048, 512,GL_RGBA, GL_UNSIGNED_BYTE,_Ygl->cram_tex_buf);
   }

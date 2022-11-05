@@ -30,6 +30,8 @@ extern "C" {
 
 #define VIDCORE_DEFAULT         -1
 
+#define CMD_QUEUE_SIZE 2048
+
 //#define YAB_ASYNC_RENDERING 1
 
 typedef struct {
@@ -83,14 +85,27 @@ typedef struct {
 
 extern Vdp1External_struct Vdp1External;
 
+typedef enum {
+  VDPCT_NORMAL_SPRITE = 0,
+  VDPCT_SCALED_SPRITE = 1,
+  VDPCT_DISTORTED_SPRITE = 2,
+  VDPCT_DISTORTED_SPRITEN = 3,
+  VDPCT_POLYGON = 4,
+  VDPCT_POLYLINE = 5,
+  VDPCT_LINE = 6,
+  VDPCT_POLYLINEN = 7,
+  VDPCT_USER_CLIPPING_COORDINATES = 8,
+  VDPCT_SYSTEM_CLIPPING_COORDINATES = 9,
+  VDPCT_LOCAL_COORDINATES = 10,
+  VDPCT_USER_CLIPPING_COORDINATESN = 11,
+
+  VDPCT_INVALID = 12,
+  VDPCT_DRAW_END
+
+} Vdp1CommandType;
+
 typedef struct
 {
-  float G[16];
-  u32 priority;
-  u32 w;
-  u32 h;
-  u32 flip;
-  u32 type;
   u32 CMDCTRL;
   u32 CMDLINK;
   u32 CMDPMOD;
@@ -105,10 +120,16 @@ typedef struct
   s32 CMDYC;
   s32 CMDXD;
   s32 CMDYD;
-  s32 B[4];
-  u32 COLOR[4];
   u32 CMDGRDA;
+  u32 COLOR[4];
+  float G[16];
+  u32 priority;
+  u32 w;
+  u32 h;
+  u32 flip;
+  u32 type;
   u32 SPCTL;
+  s32 B[4];
   u32 nbStep;
   float uAstepx;
   float uAstepy;
@@ -132,6 +153,7 @@ typedef struct
    int (*Init)(void);
    void (*DeInit)(void);
    void (*Resize)(int,int,unsigned int, unsigned int, int);
+   void (*getScale)(float *xRatio, float *yRatio);
    int (*IsFullscreen)(void);
    // VDP1 specific
    int (*Vdp1Reset)(void);
@@ -166,7 +188,7 @@ typedef struct
 
 extern VideoInterface_struct *VIDCore;
 
-extern vdp1cmdctrl_struct cmdBufferBeingProcessed[2000];
+extern vdp1cmdctrl_struct cmdBufferBeingProcessed[CMD_QUEUE_SIZE];
 
 extern u8 * Vdp1Ram;
 extern int vdp1Ram_update_start;
@@ -215,8 +237,10 @@ int Vdp1SaveState(void ** stream);
 int Vdp1LoadState(const void * stream, int version, int size);
 
 char *Vdp1DebugGetCommandNumberName(u32 number);
+Vdp1CommandType Vdp1DebugGetCommandType(u32 number);
 void Vdp1DebugCommand(u32 number, char *outstring);
 u32 *Vdp1DebugTexture(u32 number, int *w, int *h);
+u8 *Vdp1DebugRawTexture(u32 number, int *w, int *h, int *numBytes);
 void ToggleVDP1(void);
 
 void Vdp1HBlankIN(void);

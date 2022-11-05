@@ -25,8 +25,14 @@
 #include "UIBackupRam.h"
 #include "UICheats.h"
 #include "UICheatSearch.h"
+#include "UIDebugSH2.h"
 #include "UIDebugVDP1.h"
 #include "UIDebugVDP2.h"
+#include "UIDebugM68K.h"
+#include "UIDebugSCUDSP.h"
+#include "UIDebugSCSP.h"
+#include "UIDebugSCSPChan.h"
+#include "UIDebugSCSPDSP.h"
 #include "UIMemoryEditor.h"
 #include "UIMemoryTransfer.h"
 #include "UIAbout.h"
@@ -208,10 +214,10 @@ void UIYabause::leaveEvent( QEvent* e )
 	if (emulateMouse && mouseCaptured)
 	{
 		// lock cursor to center
-		int midX = geometry().x()+(width()/2); // widget global x
-		int midY = geometry().y()+menubar->height()+toolBar->height()+(height()/2); // widget global y
+		int midX = (centralWidget()->size().width()/2); // widget global x
+		int midY = centralWidget()->size().height()/2; // widget global y
 
-		QPoint newPos(midX, midY);
+		QPoint newPos(geometry().x() + centralWidget()->geometry().x() + midX, geometry().y() + centralWidget()->geometry().y() + midY);
 		this->cursor().setPos(newPos);
 	}
 }
@@ -222,6 +228,7 @@ void UIYabause::mousePressEvent( QMouseEvent* e )
 	{
 		this->setCursor(Qt::BlankCursor);
 		mouseCaptured = true;
+		mYabauseGL->getScale(&mouseXRatio, &mouseYRatio);
 	}
 	else
 		PerKeyDown( (1 << 31) | e->button() );
@@ -246,19 +253,21 @@ void UIYabause::cursorRestore()
 
 void UIYabause::mouseMoveEvent( QMouseEvent* e )
 {
-	int midX = geometry().x()+(width()/2); // widget global x
-	int midY = geometry().y()+menubar->height()+toolBar->height()+(height()/2); // widget global y
+	int midX = (centralWidget()->size().width()/2); // widget global x
+	int midY = centralWidget()->size().height()/2; // widget global y
 
-	int x = (e->x()-(width()/2))*mouseXRatio;
-	int y = ((menubar->height()+toolBar->height()+(height()/2))-e->y())*mouseYRatio;
-	int minAdj = mouseSensitivity/100;
+	int x = (e->x()-midX);
+	int y = (midY-e->y());
 
-	// If minimum movement is less than x, wait until next pass to apply
-	if (abs(x) < minAdj) x = 0;
-	if (abs(y) < minAdj) y = 0;
+	if (mouseCaptured) {
+		//use mouseSensitivity and scale ratio
+		x *= (float)mouseSensitivity/100.0;
+		y *= (float)mouseSensitivity/100.0;
+		x /= mouseXRatio;
+		y /= mouseYRatio;
 
-	if (mouseCaptured)
 		PerAxisMove((1 << 30), x, y);
+	}
 
 	VolatileSettings* vs = QtYabause::volatileSettings();
 
@@ -267,7 +276,7 @@ void UIYabause::mouseMoveEvent( QMouseEvent* e )
 		if (emulateMouse && mouseCaptured)
 		{
 			// lock cursor to center
-			QPoint newPos(midX, midY);
+			QPoint newPos(geometry().x() + centralWidget()->geometry().x() + midX, geometry().y() + centralWidget()->geometry().y() + midY);
 			this->cursor().setPos(newPos);
 			this->setCursor(Qt::BlankCursor);
 			return;
@@ -279,6 +288,8 @@ void UIYabause::mouseMoveEvent( QMouseEvent* e )
 	{
 		if (emulateMouse && mouseCaptured)
 		{
+			QPoint newPos(geometry().x() + centralWidget()->geometry().x() + midX, geometry().y() + centralWidget()->geometry().y() + midY);
+			this->cursor().setPos(newPos);
 			this->setCursor(Qt::BlankCursor);
 			return;
 		}
@@ -297,10 +308,6 @@ void UIYabause::mouseMoveEvent( QMouseEvent* e )
 
 void UIYabause::resizeEvent( QResizeEvent* event )
 {
-
-    //	if (event->oldSize().width() != event->size().width())
-    //fixAspectRatio(event->size().width(), event->size().height());
-
 	QMainWindow::resizeEvent( event );
 }
 
@@ -372,9 +379,6 @@ void UIYabause::sizeRequested( const QSize& s )
 		height=s.height();
 	}
 
-	mouseXRatio = 320.0 / (float)width * 2.0 * (float)mouseSensitivity / 100.0;
-	mouseYRatio = 240.0 / (float)height * 2.0 * (float)mouseSensitivity / 100.0;
-
 	// Compensate for menubar and toolbar
 	VolatileSettings* vs = QtYabause::volatileSettings();
 	if (vs->value( "View/Menubar" ).toInt() != BD_ALWAYSHIDE)
@@ -383,33 +387,6 @@ void UIYabause::sizeRequested( const QSize& s )
 		height += toolBar->height();
 
 	resize( width, height );
-}
-
-void UIYabause::fixAspectRatio( int width , int height )
-{
-	int aspectRatio = QtYabause::volatileSettings()->value( "Video/AspectRatio").toInt();
-
-      if (this->isFullScreen()) {
-        mYabauseGL->resize(width, height);
-      }
-      else{
-        int heightOffset = toolBar->height()+menubar->height();
-        switch(aspectRatio) {
-          case 0:
-            height = 3 * ((float) width / 4);
-            adjustHeight(height );
-            setFixedHeight(height);
-            break;
-          case 2:
-            height = 9 * ((float) width / 16);
-            adjustHeight(height );
-            setFixedHeight(height);
-            break;
-          default:
-            break;
-        }
-        mouseYRatio = 240.0 / (float)height * 2.0 * (float)mouseSensitivity / 100.0;
-      }
 }
 
 void UIYabause::toggleFullscreen( int width, int height, bool f, int videoFormat )
@@ -870,6 +847,55 @@ void UIYabause::on_aViewFullscreen_triggered( bool b )
 	fullscreenRequested( b );
 }
 
+void UIYabause::breakpointHandlerMSH2(bool displayMessage)
+{
+	YabauseLocker locker( mYabauseThread );
+	if (displayMessage)
+		CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
+	UIDebugSH2(UIDebugCPU::PROC_MSH2, mYabauseThread, this ).exec();
+}
+
+void UIYabause::breakpointHandlerSSH2(bool displayMessage)
+{
+	YabauseLocker locker( mYabauseThread );
+	if (displayMessage)
+		CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
+	UIDebugSH2(UIDebugCPU::PROC_SSH2, mYabauseThread, this ).exec();
+}
+
+void UIYabause::breakpointHandlerM68K()
+{
+	YabauseLocker locker( mYabauseThread );
+	CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
+	UIDebugM68K( mYabauseThread, this ).exec();
+}
+
+void UIYabause::breakpointHandlerSCUDSP()
+{
+	YabauseLocker locker( mYabauseThread );
+	CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
+	UIDebugSCUDSP( mYabauseThread, this ).exec();
+}
+
+void UIYabause::breakpointHandlerSCSPDSP()
+{
+	YabauseLocker locker( mYabauseThread );
+	CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
+	UIDebugSCSPDSP( mYabauseThread, this ).exec();
+}
+
+void UIYabause::on_aViewDebugMSH2_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	UIDebugSH2( UIDebugCPU::PROC_MSH2, mYabauseThread, this ).exec();
+}
+
+void UIYabause::on_aViewDebugSSH2_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	UIDebugSH2( UIDebugCPU::PROC_SSH2, mYabauseThread, this ).exec();
+}
+
 void UIYabause::on_aViewDebugVDP1_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
@@ -885,6 +911,49 @@ void UIYabause::on_aViewDebugVDP2_triggered()
 void UIYabause::on_aHelpReport_triggered()
 {
 	QDesktopServices::openUrl(QUrl(aHelpReport->statusTip()));
+}
+
+void UIYabause::on_aViewDebugM68K_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	UIDebugM68K( mYabauseThread, this ).exec();
+}
+
+void UIYabause::on_aViewDebugSCUDSP_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	UIDebugSCUDSP( mYabauseThread, this ).exec();
+}
+
+void UIYabause::on_aViewDebugSCSP_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	UIDebugSCSP( this ).exec();
+}
+
+void UIYabause::on_aViewDebugSCSPChan_triggered()
+{
+      UIDebugSCSPChan(this).exec();
+}
+
+void UIYabause::on_aViewDebugSCSPDSP_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	UIDebugSCSPDSP( mYabauseThread, this ).exec();
+}
+
+void UIYabause::on_aViewDebugMemoryEditor_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	UIMemoryEditor( UIDebugCPU::PROC_MSH2, mYabauseThread, this ).exec();
+}
+
+void UIYabause::on_aTraceLogging_triggered( bool toggled )
+{
+#ifdef SH2_TRACE
+	SH2SetInsTracing(toggled? 1 : 0);
+#endif
+	return;
 }
 
 void UIYabause::on_aHelpCompatibilityList_triggered()

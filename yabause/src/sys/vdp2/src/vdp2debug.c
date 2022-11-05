@@ -176,7 +176,7 @@ static INLINE char *AddWindowInfoString(char *outstring, int wctl, int issprite)
          AddString(outstring, "Vertical end = %d\r\n", vend);
       }
 
-      AddString(outstring, "Display %s of Window\r\n", (wctl & 0x1) ? "inside" : "outside");
+      AddString(outstring, "Valid area of Window is %s\r\n", (wctl & 0x1) ? "outside" : "inside");
    }
 
    if (wctl & 0x8)
@@ -201,13 +201,13 @@ static INLINE char *AddWindowInfoString(char *outstring, int wctl, int issprite)
          AddString(outstring, "Vertical end = %d\r\n", vend);
       }
 
-      AddString(outstring, "Display %s of Window\r\n", (wctl & 0x4) ? "inside" : "outside");
+      AddString(outstring, "Valid area of Window is %s\r\n", (wctl & 0x4) ? "outside" : "inside");
    }
 
    if (wctl & 0x20)
    {
       AddString(outstring, "Using Sprite Window:\r\n");
-      AddString(outstring, "Display %s of Window\r\n", (wctl & 0x10) ? "inside" : "outside");
+      AddString(outstring, "Valid area of Window is %s\r\n", (wctl & 0x10) ? "outside" : "inside");
    }
 
    if (wctl & 0x2A)
@@ -1464,7 +1464,7 @@ void Vdp2DebugStatsGeneral(char *outstring, int *isenabled)
 
    AddString(outstring, "RAMCTL 0x%x\r\n", Vdp2Regs->RAMCTL);
 
-   if (yabsys.screenOn != 0)
+   if ((Vdp2Regs->TVMD & 0x8000)!=0)
    {
       // TVMD stuff
       AddString(outstring, "Border Color Mode = %s\r\n", Vdp2Regs->TVMD & 0x100 ? "Back screen" : "Black");
@@ -1585,6 +1585,13 @@ void Vdp2DebugStatsGeneral(char *outstring, int *isenabled)
       AddString(outstring, "\r\n");
 
       // Cycle patterns here
+      AddString(outstring, "Cycle Pattern\r\n");
+      AddString(outstring, "-----------------\r\n");
+      AddString(outstring, "A0 = %08X\r\n", (Vdp2Regs->CYCA0L << 16) | (Vdp2Regs->CYCA0U));
+      AddString(outstring, "A1 = %08X\r\n", (Vdp2Regs->CYCA1L << 16) | (Vdp2Regs->CYCA1U));
+      AddString(outstring, "B0 = %08X\r\n", (Vdp2Regs->CYCB0L << 16) | (Vdp2Regs->CYCB0U));
+      AddString(outstring, "B1 = %08X\r\n", (Vdp2Regs->CYCB1L << 16) | (Vdp2Regs->CYCB1U));
+      AddString(outstring, "\r\n");
 
       // Sprite stuff
       AddString(outstring, "Sprite Stuff\r\n");

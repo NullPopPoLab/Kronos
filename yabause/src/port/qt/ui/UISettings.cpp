@@ -185,34 +185,34 @@ UISettings::UISettings(QList <translation_struct> *translations, QWidget* p )
 	QtYabause::retranslateWidget( this );
 }
 
-void UISettings::requestFile( const QString& c, QLineEdit* e, const QString& filters, std::optional<QString> proposedPath)
+void UISettings::requestFile( const QString& c, QLineEdit* e, const QString& filters, QString proposedPath)
 {
-	auto const & path = proposedPath.has_value() ? proposedPath.value() : e->text();
+	auto const & path = proposedPath.isEmpty() ? e->text() : proposedPath;
 	const QString s = CommonDialogs::getOpenFileName(path, c, filters );
 	if ( !s.isNull() )
 		e->setText( s );
 }
 
-void UISettings::requestNewFile( const QString& c, QLineEdit* e, const QString& filters, std::optional<QString> proposedPath)
+void UISettings::requestNewFile( const QString& c, QLineEdit* e, const QString& filters, QString proposedPath)
 {
-	auto const & path = proposedPath.has_value() ? proposedPath.value() : e->text();
+	auto const & path = proposedPath.isEmpty() ? e->text(): proposedPath;
 	const QString s = CommonDialogs::getSaveFileName(path, c, filters );
 	if ( !s.isNull() )
 		e->setText( s );
 }
 
-void UISettings::requestFolder( const QString& c, QLineEdit* e, std::optional<QString> proposedPath)
+void UISettings::requestFolder( const QString& c, QLineEdit* e, QString proposedPath)
 {
-	auto const & path = proposedPath.has_value() ? proposedPath.value() : e->text();
+	auto const & path = proposedPath.isEmpty() ? e->text() : proposedPath;
 	const QString s = CommonDialogs::getExistingDirectory(path, c );
 	if ( !s.isNull() ) {
 		e->setText( s );
   }
 }
 
-void UISettings::requestSTVFolder( const QString& c, QLineEdit* e, std::optional<QString> proposedPath )
+void UISettings::requestSTVFolder( const QString& c, QLineEdit* e, QString proposedPath )
 {
-	auto const & path = proposedPath.has_value() ? proposedPath.value() : e->text();
+	auto const & path = proposedPath.isEmpty() ? e->text() : proposedPath;
 	const QString existingDirectoryPath = CommonDialogs::getExistingDirectory(path, c );
 	if ( !existingDirectoryPath.isNull() ) {
 		e->setText( existingDirectoryPath );
@@ -347,6 +347,8 @@ void UISettings::tbBrowse_clicked()
 		requestNewFile( QtYabause::translate( "Choose a memory file" ), leMemory );
 	else if ( tb == tbMpegROM )
 		requestFile( QtYabause::translate( "Open a mpeg rom" ), leMpegROM );
+	else if ( tb == tbAddr2Line )
+		requestFile( QtYabause::translate( "Choose the location of the addr2line executable" ), leAddr2Line );
 }
 
 void UISettings::on_cbInput_currentIndexChanged( int id )
@@ -796,6 +798,9 @@ void UISettings::loadSettings()
 	bgShowToolbar->setId( rbToolbarAlways, BD_ALWAYSHIDE );
 	bgShowToolbar->button( s->value( "View/Toolbar", BD_HIDEFS ).toInt() )->setChecked( true );
 
+	// debug
+	leAddr2Line->setText( s->value( "Debug/Addr2Line" ).toString() );
+
 	//shortcuts
 	{
 		auto const actions = parent()->findChildren<QAction *>();
@@ -908,6 +913,9 @@ void UISettings::saveSettings()
 		s->setValue(action->text(), action->shortcut().toString());
 	}
 	s->endGroup();
+
+	// debug
+	s->setValue( "Debug/Addr2Line", leAddr2Line->text() );
 }
 
 void UISettings::accept()
@@ -916,12 +924,12 @@ void UISettings::accept()
 	QDialog::accept();
 }
 
-QString UISettings::getCartridgePathSettingsKey(std::optional<int> cartridgeType) const
+QString UISettings::getCartridgePathSettingsKey(int cartridgeType) const
 {
 	auto name = mCartridgeTypes[selectedCartridgeType].Name;
-	if (cartridgeType.has_value())
+	if (cartridgeType != -1)
 	{
-		name = mCartridgeTypes[cartridgeType.value()].Name;
+		name = mCartridgeTypes[cartridgeType].Name;
 	}
 	name = name.remove(' ');
 	return "Cartridge/Path/" + name;
