@@ -48,7 +48,7 @@ static char bup_path[PATH_MAX];
 static char eeprom_dir[PATH_MAX];
 static char addon_cart_path[PATH_MAX];
 
-static char game_basename[128];
+static char game_basename[PATH_MAX];
 
 static int game_width  = 320;
 static int game_height = 224;
@@ -1319,18 +1319,18 @@ void configure_saturn_addon_cart()
    if (use_beetle_saves == 1)
    {
       addon_cart_type = CART_BACKUPRAM4MBIT;
-      snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%c%s.bcr", g_save_dir, slash, game_basename);
+      snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%c%s%cmednafen_backup.bcr", g_save_dir, slash, game_basename);
    }
    else
    {
       if (addon_cart_type == CART_BACKUPRAM4MBIT)
-         snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%ckronos%csaturn%c%s-ext512K.ram", g_save_dir, slash, slash, slash, game_basename);
+         snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%c%s%ckronos_ext512K.ram", g_save_dir, slash, game_basename, slash);
       if (addon_cart_type == CART_BACKUPRAM8MBIT)
-         snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%ckronos%csaturn%c%s-ext1M.ram", g_save_dir, slash, slash, slash, game_basename);
+         snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%c%s%ckronos_ext1M.ram", g_save_dir, slash, game_basename, slash);
       if (addon_cart_type == CART_BACKUPRAM16MBIT)
-         snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%ckronos%csaturn%c%s-ext2M.ram", g_save_dir, slash, slash, slash, game_basename);
+         snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%c%s%ckronos_ext2M.ram", g_save_dir, slash, game_basename, slash);
       if (addon_cart_type == CART_BACKUPRAM32MBIT)
-         snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%ckronos%csaturn%c%s-ext4M.ram", g_save_dir, slash, slash, slash, game_basename);
+         snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%c%s%ckronos_ext4M.ram", g_save_dir, slash, game_basename, slash);
    }
 }
 
@@ -1560,11 +1560,13 @@ void retro_init(void)
       strncpy(g_save_dir, dir, sizeof(g_save_dir));
    }
 
+#if 0
    char save_dir[PATH_MAX];
    snprintf(save_dir, sizeof(save_dir), "%s%ckronos%cstv%c", g_save_dir, slash, slash, slash);
    path_mkdir(save_dir);
    snprintf(save_dir, sizeof(save_dir), "%s%ckronos%csaturn%c", g_save_dir, slash, slash, slash);
    path_mkdir(save_dir);
+#endif
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, NULL))
       libretro_supports_bitmasks = true;
@@ -1643,6 +1645,10 @@ bool retro_load_game(const struct retro_game_info *info)
    extract_basename(game_basename, info->path, sizeof(game_basename));
    extract_directory(g_roms_dir, info->path, sizeof(g_roms_dir));
 
+   char save_dir[PATH_MAX];
+   snprintf(save_dir, sizeof(save_dir), "%s%c%s%c", g_save_dir, slash, game_basename, slash);
+   path_mkdir(save_dir);
+
    // Check if the path lead to a ST-V game
    // Store the game "id", if no game id found then this is most likely not a ST-V game
    int stvgame = -1;
@@ -1684,8 +1690,8 @@ bool retro_load_game(const struct retro_game_info *info)
          return false;
       }
 
-      snprintf(bup_path, sizeof(bup_path), "%s%ckronos%cstv%c%s.ram", g_save_dir, slash, slash, slash, game_basename);
-      snprintf(eeprom_dir, sizeof(eeprom_dir), "%s%ckronos%cstv%c", g_save_dir, slash, slash, slash);
+      snprintf(bup_path, sizeof(bup_path), "%s%c%s%ckronos_backup.ram", g_save_dir, slash, game_basename, slash);
+      snprintf(eeprom_dir, sizeof(eeprom_dir), "%s%c%s%c", g_save_dir, slash, game_basename, slash);
 
       yinit.stvgamepath     = disk_paths[disk_index];
       yinit.stvgame         = stvgame;
@@ -1710,9 +1716,9 @@ bool retro_load_game(const struct retro_game_info *info)
       }
 
       if (use_beetle_saves == 1)
-         snprintf(bup_path, sizeof(bup_path), "%s%c%s.bkr", g_save_dir, slash, game_basename);
+         snprintf(bup_path, sizeof(bup_path), "%s%c%s%cmednafen_nackup.bkr", g_save_dir, slash, game_basename, slash);
       else
-         snprintf(bup_path, sizeof(bup_path), "%s%ckronos%csaturn%c%s.ram", g_save_dir, slash, slash, slash, game_basename);
+         snprintf(bup_path, sizeof(bup_path), "%s%c%s%ckronos_backup.ram", g_save_dir, slash, game_basename, slash);
 
       // Configure addon cart settings
       configure_saturn_addon_cart();
