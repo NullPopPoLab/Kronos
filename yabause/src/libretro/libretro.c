@@ -36,6 +36,8 @@ yabauseinit_struct yinit;
 
 static char slash = path_default_slash_c();
 
+static char game_basename[PATH_MAX];
+
 static char g_save_dir[PATH_MAX];
 static char g_system_dir[PATH_MAX];
 static char full_path[PATH_MAX];
@@ -956,9 +958,11 @@ void retro_init(void)
       strncpy(g_save_dir, dir, sizeof(g_save_dir));
    }
 
+#if 0
    char save_dir[PATH_MAX];
    snprintf(save_dir, sizeof(save_dir), "%s%cyabasanshiro%c", g_save_dir, slash, slash);
    path_mkdir(save_dir);
+#endif
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, NULL))
       libretro_supports_bitmasks = true;
@@ -1040,6 +1044,8 @@ bool retro_load_game(const struct retro_game_info *info)
          break;
    }
 
+   extract_basename(game_basename, info->path, sizeof(game_basename));
+
    snprintf(full_path, sizeof(full_path), "%s", info->path);
    snprintf(bios_path, sizeof(bios_path), "%s%csaturn%csaturn_bios.bin", g_system_dir, slash, slash);
    if (does_file_exist(bios_path) != 1)
@@ -1070,7 +1076,9 @@ bool retro_load_game(const struct retro_game_info *info)
       log_cb(RETRO_LOG_WARN, "HLE bios is enabled, this is for debugging purpose only, expect lots of issues\n");
    }
 
-   snprintf(bup_path, sizeof(bup_path), "%s%cyabasanshiro%cbackup.bin", g_save_dir, slash, slash);
+   snprintf(bup_path, sizeof(bup_path), "%s%c%s%c", g_save_dir, slash, game_basename, slash);
+   path_mkdir(bup_path);
+   strncat(bup_path, "yabasanshiro_backup.bin", sizeof(bup_path));
 
    struct retro_input_descriptor desc[] = {
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
