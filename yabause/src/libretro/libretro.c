@@ -91,7 +91,7 @@ static bool libretro_supports_bitmasks = false;
 static bool rendering_started = false;
 static int frame_expected = 0;
 static bool resolution_need_update = false;
-static int16_t libretro_input_bitmask[12] = {-1,};
+static int32_t libretro_input_bitmask[12] = {-1,};
 static int pad_type[12] = {RETRO_DEVICE_NONE,};
 static int multitap[2] = {0,0};
 static unsigned players = 7;
@@ -184,7 +184,7 @@ static KeyConfig_struct system_key_config[] =
 {
    { RETRO_DEVICE_ID_JOYPAD_L2,     PERJAMMA_TEST,       0, "Test"      },
    { RETRO_DEVICE_ID_JOYPAD_R2,     PERJAMMA_SERVICE,    0, "Service"   },
-   { RETRO_DEVICE_ID_JOYPAD_L3,     PERJAMMA_PAUSE,      0, "Pause"     },
+   { RETRO_DEVICE_ID_JOYPAD_MENU,   PERJAMMA_PAUSE,      0, "Pause"     },
 #if 0
    { RETRO_DEVICE_ID_JOYPAD_R3,     PERJAMMA_MULTICART,  0, "Multicart" }, // multicart is unimplemented ?
 #endif
@@ -199,24 +199,24 @@ static KeyConfig_struct stv6b_key_config[] =
    { RETRO_DEVICE_ID_JOYPAD_RIGHT,  PERPAD_RIGHT,        0, "Right"     },
    { RETRO_DEVICE_ID_JOYPAD_DOWN,   PERPAD_DOWN,         0, "Down"      },
    { RETRO_DEVICE_ID_JOYPAD_LEFT,   PERPAD_LEFT,         0, "Left"      },
-   { RETRO_DEVICE_ID_JOYPAD_Y,      PERPAD_A,            0, "Button 1"  },
-   { RETRO_DEVICE_ID_JOYPAD_X,      PERPAD_B,            0, "Button 2"  },
-   { RETRO_DEVICE_ID_JOYPAD_L,      PERPAD_C,            0, "Button 3"  },
-   { RETRO_DEVICE_ID_JOYPAD_B,      PERPAD_X,            0, "Button 4"  },
-   { RETRO_DEVICE_ID_JOYPAD_A,      PERPAD_Y,            0, "Button 5"  },
-   { RETRO_DEVICE_ID_JOYPAD_R,      PERPAD_Z,            0, "Button 6"  },
+   { RETRO_DEVICE_ID_JOYPAD_C,      PERPAD_A,            0, "Button 1"  },
+   { RETRO_DEVICE_ID_JOYPAD_B,      PERPAD_B,            0, "Button 2"  },
+   { RETRO_DEVICE_ID_JOYPAD_A,      PERPAD_C,            0, "Button 3"  },
+   { RETRO_DEVICE_ID_JOYPAD_Z,      PERPAD_X,            0, "Button 4"  },
+   { RETRO_DEVICE_ID_JOYPAD_Y,      PERPAD_Y,            0, "Button 5"  },
+   { RETRO_DEVICE_ID_JOYPAD_X,      PERPAD_Z,            0, "Button 6"  },
    { RETRO_DEVICE_ID_JOYPAD_SELECT, PERJAMMA_COIN2,      1, "Coin"      },
    { RETRO_DEVICE_ID_JOYPAD_START,  PERJAMMA_START2,     1, "Start"     },
    { RETRO_DEVICE_ID_JOYPAD_UP,     PERJAMMA_P2_UP,      1, "Up"        },
    { RETRO_DEVICE_ID_JOYPAD_RIGHT,  PERJAMMA_P2_RIGHT,   1, "Right"     },
    { RETRO_DEVICE_ID_JOYPAD_DOWN,   PERJAMMA_P2_DOWN,    1, "Down"      },
    { RETRO_DEVICE_ID_JOYPAD_LEFT,   PERJAMMA_P2_LEFT,    1, "Left"      },
-   { RETRO_DEVICE_ID_JOYPAD_Y,      PERJAMMA_P2_BUTTON1, 1, "Button 1"  },
-   { RETRO_DEVICE_ID_JOYPAD_X,      PERJAMMA_P2_BUTTON2, 1, "Button 2"  },
-   { RETRO_DEVICE_ID_JOYPAD_L,      PERJAMMA_P2_BUTTON3, 1, "Button 3"  },
-   { RETRO_DEVICE_ID_JOYPAD_B,      PERJAMMA_P2_BUTTON4, 1, "Button 4"  },
-   { RETRO_DEVICE_ID_JOYPAD_A,      PERJAMMA_P2_BUTTON5, 1, "Button 5"  },
-   { RETRO_DEVICE_ID_JOYPAD_R,      PERJAMMA_P2_BUTTON6, 1, "Button 6"  },
+   { RETRO_DEVICE_ID_JOYPAD_C,      PERJAMMA_P2_BUTTON1, 1, "Button 1"  },
+   { RETRO_DEVICE_ID_JOYPAD_B,      PERJAMMA_P2_BUTTON2, 1, "Button 2"  },
+   { RETRO_DEVICE_ID_JOYPAD_A,      PERJAMMA_P2_BUTTON3, 1, "Button 3"  },
+   { RETRO_DEVICE_ID_JOYPAD_Z,      PERJAMMA_P2_BUTTON4, 1, "Button 4"  },
+   { RETRO_DEVICE_ID_JOYPAD_Y,      PERJAMMA_P2_BUTTON5, 1, "Button 5"  },
+   { RETRO_DEVICE_ID_JOYPAD_X,      PERJAMMA_P2_BUTTON6, 1, "Button 6"  },
 };
 
 static KeyConfig_struct stv_key_config[] =
@@ -227,20 +227,20 @@ static KeyConfig_struct stv_key_config[] =
    { RETRO_DEVICE_ID_JOYPAD_RIGHT,  PERPAD_RIGHT,        0, "Right"     },
    { RETRO_DEVICE_ID_JOYPAD_DOWN,   PERPAD_DOWN,         0, "Down"      },
    { RETRO_DEVICE_ID_JOYPAD_LEFT,   PERPAD_LEFT,         0, "Left"      },
-   { RETRO_DEVICE_ID_JOYPAD_B,      PERPAD_A,            0, "Button 1"  },
-   { RETRO_DEVICE_ID_JOYPAD_A,      PERPAD_B,            0, "Button 2"  },
-   { RETRO_DEVICE_ID_JOYPAD_Y,      PERPAD_C,            0, "Button 3"  },
-   { RETRO_DEVICE_ID_JOYPAD_X,      PERPAD_X,            0, "Button 4"  },
+   { RETRO_DEVICE_ID_JOYPAD_C,      PERPAD_A,            0, "Button 1"  },
+   { RETRO_DEVICE_ID_JOYPAD_B,      PERPAD_B,            0, "Button 2"  },
+   { RETRO_DEVICE_ID_JOYPAD_A,      PERPAD_C,            0, "Button 3"  },
+   { RETRO_DEVICE_ID_JOYPAD_Z,      PERPAD_X,            0, "Button 4"  },
    { RETRO_DEVICE_ID_JOYPAD_SELECT, PERJAMMA_COIN2,      1, "Coin"      },
    { RETRO_DEVICE_ID_JOYPAD_START,  PERJAMMA_START2,     1, "Start"     },
    { RETRO_DEVICE_ID_JOYPAD_UP,     PERJAMMA_P2_UP,      1, "Up"        },
    { RETRO_DEVICE_ID_JOYPAD_RIGHT,  PERJAMMA_P2_RIGHT,   1, "Right"     },
    { RETRO_DEVICE_ID_JOYPAD_DOWN,   PERJAMMA_P2_DOWN,    1, "Down"      },
    { RETRO_DEVICE_ID_JOYPAD_LEFT,   PERJAMMA_P2_LEFT,    1, "Left"      },
-   { RETRO_DEVICE_ID_JOYPAD_B,      PERJAMMA_P2_BUTTON1, 1, "Button 1"  },
-   { RETRO_DEVICE_ID_JOYPAD_A,      PERJAMMA_P2_BUTTON2, 1, "Button 2"  },
-   { RETRO_DEVICE_ID_JOYPAD_Y,      PERJAMMA_P2_BUTTON3, 1, "Button 3"  },
-   { RETRO_DEVICE_ID_JOYPAD_X,      PERJAMMA_P2_BUTTON4, 1, "Button 4"  },
+   { RETRO_DEVICE_ID_JOYPAD_C,      PERJAMMA_P2_BUTTON1, 1, "Button 1"  },
+   { RETRO_DEVICE_ID_JOYPAD_B,      PERJAMMA_P2_BUTTON2, 1, "Button 2"  },
+   { RETRO_DEVICE_ID_JOYPAD_A,      PERJAMMA_P2_BUTTON3, 1, "Button 3"  },
+   { RETRO_DEVICE_ID_JOYPAD_Z,      PERJAMMA_P2_BUTTON4, 1, "Button 4"  },
 };
 
 static KeyConfig_struct* current_key_config = NULL;
@@ -442,32 +442,32 @@ static int update_inputs(void)
                else
                   PerKeyUp((i << 8) + PERPAD_RIGHT);
 
-               if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y))
+               if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Z))
                   PerKeyDown((i << 8) + PERPAD_X);
                else
                   PerKeyUp((i << 8) + PERPAD_X);
 
-               if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B))
+               if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_C))
                   PerKeyDown((i << 8) + PERPAD_A);
                else
                   PerKeyUp((i << 8) + PERPAD_A);
 
-               if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A))
+               if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B))
                   PerKeyDown((i << 8) + PERPAD_B);
                else
                   PerKeyUp((i << 8) + PERPAD_B);
 
-               if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X))
+               if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y))
                   PerKeyDown((i << 8) + PERPAD_Y);
                else
                   PerKeyUp((i << 8) + PERPAD_Y);
 
-               if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R))
+               if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A))
                   PerKeyDown((i << 8) + PERPAD_C);
                else
                   PerKeyUp((i << 8) + PERPAD_C);
 
-               if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L))
+               if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X))
                   PerKeyDown((i << 8) + PERPAD_Z);
                else
                   PerKeyUp((i << 8) + PERPAD_Z);
@@ -477,12 +477,12 @@ static int update_inputs(void)
                else
                   PerKeyUp((i << 8) + PERPAD_START);
 
-               if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2))
+               if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L))
                   PerKeyDown((i << 8) + PERPAD_LEFT_TRIGGER);
                else
                   PerKeyUp((i << 8) + PERPAD_LEFT_TRIGGER);
 
-               if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2))
+               if (input_state_cb_wrapper(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R))
                   PerKeyDown((i << 8) + PERPAD_RIGHT_TRIGGER);
                else
                   PerKeyUp((i << 8) + PERPAD_RIGHT_TRIGGER);
@@ -1083,7 +1083,7 @@ void check_variables(void)
 
 static void set_descriptors(void)
 {
-   int nb_descriptors = ((stv_mode?(system_key_config_nb+current_key_config_nb):(17*players))+1);
+   int nb_descriptors = ((stv_mode?(system_key_config_nb+current_key_config_nb):(19*players))+1);
    struct retro_input_descriptor *input_descriptors = (struct retro_input_descriptor*)calloc(nb_descriptors, sizeof(struct retro_input_descriptor));
 
    if(stv_mode)
@@ -1107,14 +1107,16 @@ static void set_descriptors(void)
          input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" };
          input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" };
          input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" };
-         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A" };
-         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B" };
-         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "C" };
-         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "X" };
-         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" };
-         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "Z" };
-         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,    "L" };
-         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,    "R" };
+         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_C,     "A" };
+         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "B" };
+         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "C" };
+         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Z,     "X" };
+         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "Y" };
+         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Z" };
+         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "L" };
+         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "R" };
+         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,    "Analog L" };
+         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,    "Analog R" };
          input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" };
          input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X,  "Analog X" };
          input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y,  "Analog Y" };
