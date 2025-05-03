@@ -50,7 +50,7 @@ static char bup_path[PATH_MAX];
 static char eeprom_dir[PATH_MAX];
 static char addon_cart_path[PATH_MAX];
 
-static char game_basename[128];
+static char game_basename[PATH_MAX];
 
 static int game_width  = 320;
 static int game_height = 224;
