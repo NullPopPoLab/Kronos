@@ -1716,7 +1716,7 @@ bool retro_load_game(const struct retro_game_info *info)
       }
 
       if (use_beetle_saves == 1)
-         snprintf(bup_path, sizeof(bup_path), "%s%c%s%cmednafen_nackup.bkr", g_save_dir, slash, game_basename, slash);
+         snprintf(bup_path, sizeof(bup_path), "%s%c%s%cmednafen_backup.bkr", g_save_dir, slash, game_basename, slash);
       else
          snprintf(bup_path, sizeof(bup_path), "%s%c%s%ckronos_backup.ram", g_save_dir, slash, game_basename, slash);
 
