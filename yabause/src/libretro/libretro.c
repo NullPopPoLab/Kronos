@@ -37,6 +37,8 @@
 #include "sh2int_kronos.h"
 #include "libretro_core_options.h"
 
+#define CUSTOM_VERSION "+NCA34"
+
 yabauseinit_struct yinit;
 
 static char slash = PATH_DEFAULT_SLASH_C();
@@ -883,7 +885,7 @@ void retro_get_system_info(struct retro_system_info *info)
 #ifndef GIT_VERSION
 #define GIT_VERSION ""
 #endif
-   info->library_version  = "v" VERSION GIT_VERSION;
+   info->library_version  = "v" VERSION GIT_VERSION CUSTOM_VERSION;
    info->need_fullpath    = true;
    info->block_extract    = true;
    info->valid_extensions = "cue|iso|mds|ccd|zip|chd|m3u";
@@ -1139,7 +1141,7 @@ void check_variables(void)
 
 static void set_descriptors(void)
 {
-   int nb_descriptors = ((stv_mode?(system_key_config_nb+current_key_config_nb):(17*players))+1);
+   int nb_descriptors = ((stv_mode?(system_key_config_nb+current_key_config_nb):(19*players))+1);
    struct retro_input_descriptor *input_descriptors = (struct retro_input_descriptor*)calloc(nb_descriptors, sizeof(struct retro_input_descriptor));
 
    if(stv_mode)
@@ -1168,9 +1170,11 @@ static void set_descriptors(void)
          input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "C" };
          input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Z,     "X" };
          input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "Y" };
-         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Z,     "Z" };
+         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Z" };
          input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "L" };
          input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "R" };
+         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,    "Analog L" };
+         input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,    "Analog R" };
          input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" };
          input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X,  "Analog X" };
          input_descriptors[j++] = (struct retro_input_descriptor){ i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y,  "Analog Y" };
@@ -1776,7 +1780,7 @@ bool retro_load_game(const struct retro_game_info *info)
       }
 
       if (use_beetle_saves == 1)
-         snprintf(bup_path, sizeof(bup_path), "%s%c%s%cmednafen_nackup.bkr", g_save_dir, slash, game_basename, slash);
+         snprintf(bup_path, sizeof(bup_path), "%s%c%s%cmednafen_backup.bkr", g_save_dir, slash, game_basename, slash);
       else
          snprintf(bup_path, sizeof(bup_path), "%s%c%s%ckronos_backup.ram", g_save_dir, slash, game_basename, slash);
 
