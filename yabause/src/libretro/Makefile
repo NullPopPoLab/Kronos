@@ -111,7 +111,7 @@ else ifneq (,$(findstring rockpro64,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
-	LDFLAGS += -lpthread -lGL
+	LDFLAGS += -lpthread
 	ARCH_IS_LINUX = 1
 	HAVE_SSE = 0
 	FORCE_GLES = 1
@@ -123,7 +123,7 @@ else ifeq ($(platform), odroid-n2)
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
-	LDFLAGS += -lpthread -lGL
+	LDFLAGS += -lpthread
 	ARCH_IS_LINUX = 1
 	HAVE_SSE = 0
 	FORCE_GLES = 1
@@ -134,12 +134,28 @@ else ifeq ($(platform), odroid-n2)
 		FLAGS += -march=armv8-a+crc -mtune=cortex-a73.cortex-a53
 	endif
 
-else ifneq (,$(findstring odroid,$(platform)))
+else ifeq ($(platform), odroid-c4)
 	override platform += unix
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
 	LDFLAGS += -lpthread -lGL
+	ARCH_IS_LINUX = 1
+	HAVE_SSE = 0
+	FORCE_GLES = 1
+	# ODROID-C4
+	ifneq (, $(findstring clang,$(CC)))
+		FLAGS += -march=armv8-a+crc
+	else
+		FLAGS += -march=armv8-a+crc -mtune=cortex-a55
+	endif
+
+else ifneq (,$(findstring odroid,$(platform)))
+	override platform += unix
+	TARGET := $(TARGET_NAME)_libretro.so
+	fpic := -fPIC
+	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
+	LDFLAGS += -lpthread
 	ARCH_IS_LINUX = 1
 	BOARD := $(shell cat /proc/cpuinfo | grep -i odroid | awk '{print $$3}')
 
