@@ -32,7 +32,7 @@
 #include "vidsoft.h"
 #include "ygl.h"
 
-#define CUSTOM_VERSION "+NC41"
+#define CUSTOM_VERSION "+NCA41"
 
 yabauseinit_struct yinit;
 
