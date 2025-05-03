@@ -35,7 +35,7 @@
 #include "sh2int_kronos.h"
 #include "libretro_core_options.h"
 
-#define CUSTOM_VERSION "+NC41"
+#define CUSTOM_VERSION "+NCA41"
 
 yabauseinit_struct yinit;
 
