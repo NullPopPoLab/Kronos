@@ -32,6 +32,8 @@
 #include "vidsoft.h"
 #include "ygl.h"
 
+#define CUSTOM_VERSION "+NC41"
+
 yabauseinit_struct yinit;
 
 static char slash = path_default_slash_c();
@@ -659,7 +661,7 @@ void retro_get_system_info(struct retro_system_info *info)
 #ifndef GIT_VERSION
 #define GIT_VERSION ""
 #endif
-   info->library_version  = "v" VERSION GIT_VERSION;
+   info->library_version  = "v" VERSION GIT_VERSION CUSTOM_VERSION;
    info->need_fullpath    = true;
    info->block_extract    = true;
    info->valid_extensions = "cue|iso|mds|ccd|chd";
