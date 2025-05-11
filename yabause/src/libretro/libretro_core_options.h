@@ -86,7 +86,7 @@ struct retro_core_option_definition option_defs_us[] = {
          { "opengl_cs", "OpenGL CS (requires OpenGL 4.3+)" },
          { NULL, NULL},
       },
-      "perspective_correction"
+      "opengl"
    },
 #endif
    {
@@ -258,7 +258,7 @@ struct retro_core_option_definition option_defs_us[] = {
          { "Japanese", NULL },
          { NULL, NULL},
       },
-      "EU"
+      "English"
    },
    { NULL, NULL, NULL, {{0}}, NULL },
 };
