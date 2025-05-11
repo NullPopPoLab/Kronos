@@ -115,7 +115,7 @@ struct retro_core_option_definition option_defs_us[] = {
          { "4M_backup_ram", NULL },
          { NULL, NULL},
       },
-      "512K_backup_ram"
+      "4M_extended_ram"
    },
    {
       "kronos_multitap_port1",
@@ -175,7 +175,7 @@ struct retro_core_option_definition option_defs_us[] = {
          { "cpu_tesselation", NULL },
          { NULL, NULL},
       },
-      "cpu_tesselation"
+      "perspective_correction"
    },
    {
       "kronos_meshmode",
